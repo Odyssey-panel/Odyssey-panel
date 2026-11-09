@@ -27,7 +27,7 @@ ENV NODE_ENV=production \
     HOSTNAME=0.0.0.0 \
     DATABASE_URL=file:/data/panel.db
 
-RUN apk add --no-cache openssl && addgroup -g 1001 -S nodejs && adduser -S panel -u 1001
+RUN apk add --no-cache openssl su-exec && addgroup -g 1001 -S nodejs && adduser -S panel -u 1001
 
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
@@ -42,5 +42,6 @@ COPY --from=builder /app/scripts/boot.sh ./scripts/boot.sh
 RUN mkdir -p /data && chown -R panel:nodejs /data /app
 EXPOSE 8080
 
-USER panel
-CMD ["sh", "scripts/boot.sh"]
+# Railway mounts volumes as root:root — start as root to fix ownership,
+# then drop to the unprivileged 'panel' user before starting the server.
+CMD ["sh", "-c", "chown -R panel:nodejs /data 2>/dev/null || true; exec su-exec panel:nodejs sh scripts/boot.sh"]
