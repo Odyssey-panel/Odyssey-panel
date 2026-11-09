@@ -13,7 +13,7 @@ ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 # generate prisma client + create db schema at build time
-RUN npx prisma generate || bunx prisma generate || true
+RUN npx prisma generate
 ENV DATABASE_URL=file:/tmp/build.db
 RUN mkdir -p /tmp && npx prisma db push --skip-generate || true
 RUN npm run build
@@ -38,9 +38,8 @@ COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/scripts/boot.sh ./scripts/boot.sh
 
-# Persistent data directory (mount a volume here on Railway / VPS)
+# Persistent data directory (attach a Railway volume at /data in the dashboard)
 RUN mkdir -p /data && chown -R panel:nodejs /data /app
-VOLUME ["/data"]
 EXPOSE 8080
 
 USER panel
