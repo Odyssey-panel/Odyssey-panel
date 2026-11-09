@@ -57,6 +57,10 @@ tool-results
 # local sqlite database
 /db/*.db
 /db/*.db-journal
+/prisma/template.db
+/prisma/*.db-journal
+/prisma/*.db-wal
+/prisma/*.db-shm
 
 # skill/tooling dirs (not part of the panel)
 /skills/

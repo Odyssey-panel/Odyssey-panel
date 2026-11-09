@@ -11,10 +11,13 @@ RUN apk add --no-cache libc6-compat openssl
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
-# generate prisma client + create db schema at build time
+# generate prisma client
 RUN npx prisma generate
-ENV DATABASE_URL=file:/tmp/build.db
-RUN mkdir -p /tmp && npx prisma db push --skip-generate || true
+# bake a template database holding the complete schema — copied into the
+# runtime image and used by scripts/ensure-db.mjs for runtime self-healing
+ENV DATABASE_URL=file:/app/prisma/template.db
+RUN npx prisma db push --skip-generate && rm -f /app/prisma/template.db-*
+# build the app
 RUN npm run build
 
 # ---- runtime ----
@@ -32,10 +35,13 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/prisma ./node_modules/prisma
-COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/scripts/boot.sh ./scripts/boot.sh
+COPY --from=builder /app/scripts/ensure-db.mjs ./scripts/ensure-db.mjs
+# full prisma CLI (complete dependency tree incl. 'effect' etc.) so that
+# `prisma db push` genuinely works at runtime for future schema upgrades
+RUN npm install -g --no-audit --no-fund prisma@6.19.2
 
 # Persistent data directory (attach a Railway volume at /data in the dashboard)
 RUN mkdir -p /data && chown -R panel:nodejs /data /app
@@ -43,4 +49,6 @@ EXPOSE 8080
 
 # Railway mounts volumes as root:root — start as root to fix ownership,
 # then drop to the unprivileged 'panel' user before starting the server.
-CMD ["sh", "-c", "chown -R panel:nodejs /data 2>/dev/null || true; exec su-exec panel:nodejs sh scripts/boot.sh"]
+# HOME is pointed at /tmp so the unprivileged user never writes to
+# root-owned cache directories.
+CMD ["sh", "-c", "chown -R panel:nodejs /data 2>/dev/null || true; exec su-exec panel:nodejs env HOME=/tmp sh scripts/boot.sh"]
