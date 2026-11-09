@@ -1,14 +1,13 @@
-# ---- deps ----
-FROM node:22-alpine AS deps
+# ---- deps (bun + frozen lockfile = reproducible) ----
+FROM oven/bun:1-alpine AS deps
 WORKDIR /app
-RUN apk add --no-cache libc6-compat openssl
 COPY package.json bun.lock ./
-# Install with npm using the lockfile as reference (registry-agnostic)
-RUN npm install --legacy-peer-deps
+RUN bun install --frozen-lockfile
 
 # ---- build ----
 FROM node:22-alpine AS builder
 WORKDIR /app
+RUN apk add --no-cache libc6-compat openssl
 ENV NEXT_TELEMETRY_DISABLED=1
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
