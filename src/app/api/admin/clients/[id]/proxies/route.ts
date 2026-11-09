@@ -1,0 +1,72 @@
+import { db } from '@/lib/db'
+import { requireAuth, jsonSafe } from '@/lib/auth'
+import { randomBytes } from 'node:crypto'
+import { buildServerConfig } from '@/lib/links'
+
+export const runtime = 'nodejs'
+
+type Params = { params: Promise<{ id: string }> }
+
+type ProxyBody = {
+  protocol?: string
+  remark?: string
+  address?: string
+  port?: number
+  sni?: string
+  host?: string
+  path?: string
+  transport?: string
+  tls?: boolean
+}
+
+export async function POST(req: Request, { params }: Params) {
+  const unauthorized = await requireAuth()
+  if (unauthorized) return unauthorized
+  const { id } = await params
+  const client = await db.client.findUnique({ where: { id } })
+  if (!client) return Response.json({ error: 'Client not found' }, { status: 404 })
+
+  const body = (await req.json().catch(() => ({}))) as ProxyBody
+  const protocol = body.protocol || 'vless'
+  if (!['vless', 'vmess', 'trojan', 'shadowsocks'].includes(protocol)) {
+    return Response.json({ error: 'Invalid protocol' }, { status: 400 })
+  }
+  const address = (body.address || '').trim()
+  const port = Number(body.port)
+  if (!address || !port || port < 1 || port > 65535) {
+    return Response.json({ error: 'Valid address and port required' }, { status: 400 })
+  }
+
+  const isUuid = protocol === 'vless' || protocol === 'vmess'
+  const secret = isUuid ? crypto.randomUUID() : randomBytes(16).toString('base64url')
+  const proxyLike = {
+    protocol,
+    remark: body.remark?.trim() || client.name,
+    address,
+    port,
+    secret,
+    sni: body.sni?.trim() || null,
+    host: body.host?.trim() || null,
+    path: body.path?.trim() || '/',
+    transport: body.transport || 'ws',
+    tls: body.tls ?? true,
+  }
+
+  const proxy = await db.proxy.create({
+    data: {
+      clientId: id,
+      protocol: proxyLike.protocol,
+      remark: proxyLike.remark,
+      address: proxyLike.address,
+      port: proxyLike.port,
+      secret,
+      sni: proxyLike.sni,
+      host: proxyLike.host,
+      path: proxyLike.path,
+      transport: proxyLike.transport,
+      tls: proxyLike.tls,
+      serverConfig: JSON.stringify(buildServerConfig(proxyLike)),
+    },
+  })
+  return jsonSafe({ proxy }, { status: 201 })
+}

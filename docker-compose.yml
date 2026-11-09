@@ -1,0 +1,20 @@
+services:
+  panel:
+    build: .
+    container_name: odyssey-panel
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      NODE_ENV: production
+      PORT: 8080
+      HOSTNAME: 0.0.0.0
+      DATABASE_URL: file:/data/panel.db
+      # Optional: pin the public URL used in subscription links / QR codes.
+      # Leave empty to auto-detect from the first admin login.
+      # PANEL_PUBLIC_URL: https://panel.example.com
+    volumes:
+      - panel-data:/data
+
+volumes:
+  panel-data:

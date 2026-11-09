@@ -1,0 +1,12 @@
+node_modules
+.next
+db/*.db
+*.log
+dev.log
+server.log
+.git
+.env
+/tmp
+download
+tests
+examples

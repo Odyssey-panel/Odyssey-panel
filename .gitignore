@@ -1,0 +1,69 @@
+# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+
+# dependencies
+node_modules
+/.pnp
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/versions
+
+# testing
+/coverage
+
+# next.js
+/.next/
+/out/
+
+# production
+/build
+
+# misc
+.DS_Store
+*.pem
+
+# debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# env files (keep .env.example, ignore real envs)
+.env
+.env.local
+.env.*.local
+
+# vercel
+.vercel
+
+# typescript
+*.tsbuildinfo
+next-env.d.ts
+
+# sandbox / local artifacts
+.claude
+.z-ai-config
+*.log
+dev.log
+dev.out.log
+server.log
+test
+prompt
+local-*
+tool-results
+
+# local sqlite database
+/db/*.db
+/db/*.db-journal
+
+# skill/tooling dirs (not part of the panel)
+/skills/
+/examples/
+/mini-services/
+/tests/
+
+# user uploads / sandbox
+/download/
+/.zscripts/

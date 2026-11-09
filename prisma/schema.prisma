@@ -1,0 +1,82 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// A subscriber of the proxy/subscription service
+model Client {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  note      String?
+  // 0 = unlimited
+  limitBytes BigInt   @default(0)
+  usedBytes  BigInt   @default(0)
+  // null = never expires
+  expiresAt DateTime?
+  status    String   @default("active") // active | disabled
+  subToken  String   @unique
+  proxies   Proxy[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// A locally generated proxy/VPN account belonging to a client
+model Proxy {
+  id           String   @id @default(cuid())
+  clientId     String
+  client       Client   @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  protocol     String // vless | vmess | trojan | shadowsocks
+  remark       String
+  address      String
+  port         Int
+  secret       String // uuid (vless/vmess) or password (trojan/ss)
+  sni          String?
+  host         String?
+  path         String?
+  transport    String   @default("ws") // ws | grpc | tcp
+  tls          Boolean  @default(true)
+  flow         String?
+  serverConfig String? // JSON server-side inbound config for xray/sing-box
+  createdAt    DateTime @default(now())
+}
+
+// Backend node (VPS/inbound) tracked with simple TCP/TLS health checks
+model Node {
+  id            String    @id @default(cuid())
+  name          String
+  address       String
+  port          Int
+  protocol      String    @default("vless")
+  tls           Boolean   @default(true)
+  sni           String?
+  location      String?
+  status        String    @default("unknown") // up | down | unknown
+  latencyMs     Int?
+  certExpiresAt DateTime?
+  lastCheckedAt DateTime?
+  note          String?
+  createdAt     DateTime  @default(now())
+}
+
+// Cloudflare worker / external endpoint tracked with HTTP health checks
+model Worker {
+  id            String    @id @default(cuid())
+  name          String
+  url           String
+  status        String    @default("unknown") // up | down | unknown
+  latencyMs     Int?
+  httpStatus    Int?
+  lastCheckedAt DateTime?
+  note          String?
+  createdAt     DateTime  @default(now())
+}
+
+// Key/value panel settings (admin password hash, panel URL, ...)
+model Setting {
+  key   String @id
+  value String
+}
