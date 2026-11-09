@@ -67,3 +67,6 @@ tool-results
 # user uploads / sandbox
 /download/
 /.zscripts/
+
+# user chat uploads
+/upload/
