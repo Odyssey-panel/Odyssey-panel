@@ -74,3 +74,5 @@ tool-results
 
 # user chat uploads
 /upload/
+# local test copies — the Dockerfile downloads xray at build time
+/bin/
