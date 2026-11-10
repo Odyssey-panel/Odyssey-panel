@@ -27,7 +27,7 @@ const vazirmatn = Vazirmatn({
 export const metadata: Metadata = {
   title: "اودیسه — ODYSSEY",
   description:
-    "اودیسه — مدیریت کاربران، ترافیک، لینک اشتراک و نودها؛ رایگان و سلف‌هاست. / ODYSSEY — free self-hosted proxy & subscription control panel. Secure · Private · Unlimited.",
+    "اودیسه — مدیریت کاربران، ترافیک، لینک اشتراک و نودها؛ چند-پروتکل و ضد فیلترینگ. / ODYSSEY — multi-protocol anti-filter proxy & subscription control panel. Secure · Private · Fast.",
   icons: {
     icon: "/icon.svg",
   },

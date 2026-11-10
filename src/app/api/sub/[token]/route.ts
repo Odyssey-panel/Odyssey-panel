@@ -45,6 +45,7 @@ export async function GET(req: Request, { params }: Params) {
     transport: p.transport,
     tls: p.tls,
     flow: p.flow,
+    fragment: p.fragment,
   }))
 
   const { body, contentType } = buildSubscription(proxies, format)

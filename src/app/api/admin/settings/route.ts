@@ -11,7 +11,7 @@ export async function GET() {
   return jsonSafe({ settings: redactSettings(settings) })
 }
 
-const EDITABLE_KEYS = new Set(['publicUrl'])
+const EDITABLE_KEYS = new Set(['publicUrl', 'ispPresets'])
 
 export async function PUT(req: Request) {
   const unauthorized = await requireAuth()
@@ -21,6 +21,17 @@ export async function PUT(req: Request) {
   const patch: Partial<Record<keyof PanelSettings, string>> = {}
   for (const [k, v] of Object.entries(body)) {
     if (EDITABLE_KEYS.has(k) && typeof v === 'string') {
+      // ispPresets must be a JSON object (map of ISP overrides)
+      if (k === 'ispPresets' && v) {
+        try {
+          const parsed = JSON.parse(v)
+          if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+            return Response.json({ error: 'ispPresets must be a JSON object' }, { status: 400 })
+          }
+        } catch {
+          return Response.json({ error: 'ispPresets must be valid JSON' }, { status: 400 })
+        }
+      }
       patch[k as keyof PanelSettings] = v
     }
   }

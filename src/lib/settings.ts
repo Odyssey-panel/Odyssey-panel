@@ -5,6 +5,8 @@ export type PanelSettings = {
   panelSecret: string
   publicUrl: string
   lastOrigin: string
+  /** JSON map of ISP anti-censorship preset overrides (src/lib/isps.ts) */
+  ispPresets: string
 }
 
 /** Source of truth for defaults — missing DB rows fall back to these. */
@@ -13,6 +15,7 @@ export const SETTINGS_DEFAULTS: Record<keyof PanelSettings, string> = {
   panelSecret: 'insecure-dev-secret',
   publicUrl: '',
   lastOrigin: '',
+  ispPresets: '',
 }
 
 /** Keys hidden from the settings GET response. */

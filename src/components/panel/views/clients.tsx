@@ -42,6 +42,8 @@ import { api, useApi } from '../api'
 import { bytesToGb, daysLeft, formatBytes, formatDate, trafficState } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { toast } from 'sonner'
+import { buildShareLink, buildDeepLinks, buildTelegramTapLink } from '@/lib/links'
+import { ISP_PRESETS } from '@/lib/isps'
 import {
   Plus,
   Search,
@@ -56,6 +58,8 @@ import {
   Zap,
   Loader2,
   Server,
+  Send,
+  Smartphone,
 } from 'lucide-react'
 
 type ProxyRow = {
@@ -70,6 +74,7 @@ type ProxyRow = {
   path: string | null
   transport: string
   tls: boolean
+  fragment: string | null
   serverConfig: string | null
 }
 
@@ -86,8 +91,12 @@ type ClientRow = {
   proxies: ProxyRow[]
 }
 
-const PROTOCOLS = ['vless', 'vmess', 'trojan', 'shadowsocks'] as const
+const PROTOCOLS = ['vless', 'vmess', 'trojan', 'shadowsocks', 'hysteria2', 'tuic', 'mtproto'] as const
 const TRANSPORTS = ['ws', 'grpc', 'tcp'] as const
+/** Protocols with xray-style stream fields (transport/path/host/TLS switch). */
+const STREAM_PROTOS = new Set(['vless', 'vmess', 'trojan', 'shadowsocks'])
+/** Fragment only applies to URL-style TLS links (vless/trojan). */
+const FRAGMENT_PROTOS = new Set(['vless', 'trojan'])
 
 function originBase(): string {
   if (typeof window === 'undefined') return ''
@@ -173,7 +182,7 @@ export function ClientsView() {
             const state = trafficState(c.usedBytes, c.limitBytes, c.status, c.expiresAt, lang)
             const pct = c.limitBytes > 0 ? Math.min(100, (c.usedBytes / c.limitBytes) * 100) : 0
             const dl = daysLeft(c.expiresAt)
-            const links = c.proxies.map((p) => buildClientLink(p)).filter(Boolean)
+            const links = c.proxies.map((p) => buildShareLink(p)).filter(Boolean)
             return (
               <Card key={c.id} className="transition-colors hover:border-primary/30">
                 <CardContent className="p-4">
@@ -361,6 +370,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const [busy, setBusy] = useState(false)
   const { t } = useLang()
 
+  const isMtprotoC = protocol === 'mtproto'
+  const isSingboxC = protocol === 'hysteria2' || protocol === 'tuic'
+  const showStreamC = STREAM_PROTOS.has(protocol)
+
   const submit = async () => {
     if (!name.trim()) {
       toast.error(t('Name is required'))
@@ -384,10 +397,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
           address: withProxy ? address.trim() : undefined,
           port: withProxy ? Number(port) : undefined,
           sni: withProxy ? sni.trim() || undefined : undefined,
-          transport: withProxy ? transport : undefined,
-          path: withProxy ? path.trim() || undefined : undefined,
-          host: withProxy ? host.trim() || undefined : undefined,
-          tls: withProxy ? tls : undefined,
+          transport: withProxy && !isMtprotoC && !isSingboxC ? transport : undefined,
+          path: withProxy && !isMtprotoC && !isSingboxC ? path.trim() || undefined : undefined,
+          host: withProxy && !isMtprotoC && !isSingboxC ? host.trim() || undefined : undefined,
+          tls: withProxy && !isMtprotoC && !isSingboxC ? tls : true,
         }),
       })
       toast.success(
@@ -456,7 +469,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                 </div>
                 <div className="space-y-1.5 sm:col-span-2">
                   <Label>{t('Server address / IP *')}</Label>
-                  <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="vps.example.com" />
+                  <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="vps.example.com یا 2001:db8::1" />
                 </div>
               </div>
               <div className="grid gap-3 sm:grid-cols-3">
@@ -465,33 +478,43 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                   <Input type="number" value={port} onChange={(e) => setPort(e.target.value)} />
                 </div>
                 <div className="space-y-1.5">
-                  <Label>{t('SNI / domain')}</Label>
+                  <Label>{isMtprotoC ? 'FakeTLS domain' : t('SNI / domain')}</Label>
                   <Input value={sni} onChange={(e) => setSni(e.target.value)} placeholder={t('same as address')} />
                 </div>
-                <div className="flex items-center justify-between gap-2 rounded-lg border px-3">
-                  <Label htmlFor="c-tls" className="text-xs">TLS</Label>
-                  <Switch id="c-tls" checked={tls} onCheckedChange={setTls} />
-                </div>
+                {showStreamC && (
+                  <div className="flex items-center justify-between gap-2 rounded-lg border px-3">
+                    <Label htmlFor="c-tls" className="text-xs">TLS</Label>
+                    <Switch id="c-tls" checked={tls} onCheckedChange={setTls} />
+                  </div>
+                )}
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label>{t('Transport')}</Label>
-                  <Select value={transport} onValueChange={setTransport}>
-                    <SelectTrigger aria-label={t('Transport')}><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {TRANSPORTS.map((tr) => <SelectItem key={tr} value={tr}>{tr}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+              {showStreamC && (
+                <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="space-y-1.5">
+                    <Label>{t('Transport')}</Label>
+                    <Select value={transport} onValueChange={setTransport}>
+                      <SelectTrigger aria-label={t('Transport')}><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {TRANSPORTS.map((tr) => <SelectItem key={tr} value={tr}>{tr}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{transport === 'grpc' ? t('Service name') : t('WS path')}</Label>
+                    <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/" />
+                  </div>
+                  <div className="space-y-1.5">
+                    <Label>{t('Host header')}</Label>
+                    <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t('optional')} />
+                  </div>
                 </div>
-                <div className="space-y-1.5">
-                  <Label>{transport === 'grpc' ? t('Service name') : t('WS path')}</Label>
-                  <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/" />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>{t('Host header')}</Label>
-                  <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t('optional')} />
-                </div>
-              </div>
+              )}
+              {isMtprotoC && (
+                <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('MTProto: address = server IP, port = proxy port — the secret is generated automatically. Users open the link in Telegram.')}</p>
+              )}
+              {isSingboxC && (
+                <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('Hysteria2/TUIC need a sing-box based server (Hiddify, s-ui, …); the config file has both client and server JSON.')}</p>
+              )}
             </div>
           )}
         </div>
@@ -654,10 +677,10 @@ function DetailDialog({
           {client.proxies.length > 0 ? (
             <div className="space-y-1.5" dir="ltr">
               <div className="text-xs font-medium text-muted-foreground" dir="rtl">
-                {t('Config address (vless://)')}
+                {t('Config address')}
               </div>
               {client.proxies.map((p) => {
-                const link = buildClientLink(p)
+                const link = buildShareLink(p)
                 if (!link) return null
                 return (
                   <div key={p.id} className="flex items-center gap-1.5">
@@ -683,6 +706,22 @@ function DetailDialog({
               {t('No config yet — add a proxy account (with a server address) and its vless:// address will appear here')}
             </p>
           )}
+          {/* One-tap import into popular clients */}
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5 text-xs font-medium text-muted-foreground" dir="rtl">
+              <Smartphone className="h-3.5 w-3.5" /> {t('Import in one tap')}
+            </div>
+            <div className="flex flex-wrap gap-1.5" dir="ltr">
+              {buildDeepLinks(sub).map((d) => (
+                <a key={d.id} href={d.url} aria-label={`${t('Import in one tap')} — ${d.label}`}>
+                  <Button variant="outline" size="sm" className="h-8 font-mono">
+                    {d.label}
+                  </Button>
+                </a>
+              ))}
+            </div>
+            <p className="text-[11px] text-muted-foreground">{t('Tap an app — it imports the subscription instantly')}</p>
+          </div>
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => onQr(sub)}>
               <QrCode className="h-3.5 w-3.5" /> {t('Show QR')}
@@ -731,18 +770,30 @@ function DetailDialog({
           ) : (
             <div className="space-y-3">
               {client.proxies.map((p) => {
-                const link = buildClientLink(p)
+                const link = buildShareLink(p)
                 return (
                   <div key={p.id} className="space-y-2 rounded-lg border p-3">
                     <div className="flex flex-wrap items-center justify-between gap-2">
                       <div className="flex flex-wrap items-center gap-2">
                         <Badge variant="outline" className="font-mono uppercase">{p.protocol}</Badge>
                         <span className="font-medium">{p.remark}</span>
+                        {p.fragment ? (
+                          <Badge className="bg-odyssey-cyan/15 font-mono text-[10px] text-odyssey-deep ring-1 ring-inset ring-odyssey-cyan/30 dark:text-odyssey-bright" dir="ltr">
+                            frg
+                          </Badge>
+                        ) : null}
                         <span className="font-mono text-xs text-muted-foreground" dir="ltr">
                           {p.address}:{p.port} · {p.transport} · {p.tls ? t('TLS on') : t('TLS off')}
                         </span>
                       </div>
                       <div className="flex flex-wrap gap-1.5">
+                        {p.protocol === 'mtproto' && (
+                          <a href={buildTelegramTapLink(p)} aria-label={t('Open in Telegram')}>
+                            <Button variant="outline" size="sm" className="h-8">
+                              <Send className="h-3.5 w-3.5" /> {t('Open in Telegram')}
+                            </Button>
+                          </a>
+                        )}
                         <CopyButton value={link} label={t('Link')} />
                         <CopyButton value={p.secret} label={t('Secret')} />
                         {p.serverConfig && (
@@ -836,9 +887,22 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
   const [path, setPath] = useState('/')
   const [host, setHost] = useState('')
   const [tls, setTls] = useState(true)
+  const [fragment, setFragment] = useState('')
   const [remark, setRemark] = useState(defaultRemark)
   const [busy, setBusy] = useState(false)
   const { t } = useLang()
+
+  const isMtproto = protocol === 'mtproto'
+  const isSingboxLike = protocol === 'hysteria2' || protocol === 'tuic'
+  const showStream = STREAM_PROTOS.has(protocol)
+  const showFragment = FRAGMENT_PROTOS.has(protocol)
+
+  const applyIsp = (isp: (typeof ISP_PRESETS)[number]) => {
+    setPort(isp.port)
+    setSni(isp.sni)
+    if (showStream) setTransport(isp.transport)
+    if (showFragment) setFragment(`${isp.length},${isp.interval},${isp.packets}`)
+  }
 
   const submit = async () => {
     setBusy(true)
@@ -847,12 +911,17 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
         method: 'POST',
         body: JSON.stringify({
           protocol, address: address.trim(), port: Number(port), sni: sni.trim() || undefined,
-          transport, path: path.trim() || '/', host: host.trim() || undefined, tls, remark: remark.trim() || undefined,
+          transport: isMtproto || isSingboxLike ? undefined : transport,
+          path: isMtproto || isSingboxLike ? undefined : path.trim() || '/',
+          host: isMtproto || isSingboxLike ? undefined : host.trim() || undefined,
+          tls: isMtproto || isSingboxLike ? true : tls,
+          fragment: showFragment ? fragment.trim() || undefined : undefined,
+          remark: remark.trim() || undefined,
         }),
       })
       toast.success(t('Account generated'))
       setOpen(false)
-      setAddress(''); setSni(''); setPort('443'); setPath('/')
+      setAddress(''); setSni(''); setPort('443'); setPath('/'); setFragment('')
       await onAdded()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t('Failed'))
@@ -867,7 +936,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
         <Plus className="h-3.5 w-3.5" /> {t('Add account')}
       </Button>
       <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-md">
           <DialogHeader>
             <DialogTitle>{t('Add proxy account')}</DialogTitle>
             <DialogDescription>{t('A fresh UUID/password is generated on the server and stored locally.')}</DialogDescription>
@@ -886,10 +955,30 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
                 <Input value={remark} onChange={(e) => setRemark(e.target.value)} />
               </div>
             </div>
+
+            {/* Operator quick-fill presets (anti-filter) */}
+            {showFragment && (
+              <div className="space-y-1.5 rounded-lg border bg-muted/20 p-2.5">
+                <div className="text-[11px] font-medium text-muted-foreground">{t('Quick fill from operator')}</div>
+                <div className="flex flex-wrap gap-1">
+                  {ISP_PRESETS.map((isp) => (
+                    <button
+                      key={isp.id}
+                      type="button"
+                      onClick={() => applyIsp(isp)}
+                      className="rounded-full border bg-white/[0.03] px-2 py-0.5 text-[11px] transition-all hover:-translate-y-0.5 hover:border-odyssey-cyan/40 hover:bg-odyssey-cyan/10 dark:bg-white/[0.04]"
+                    >
+                      {isp.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5 sm:col-span-2">
-                <Label>{t('Address *')}</Label>
-                <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="vps.example.com" />
+                <Label>{isMtproto ? t('Server address / IP *') : t('Address *')}</Label>
+                <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="vps.example.com یا 2001:db8::1" />
               </div>
               <div className="space-y-1.5">
                 <Label>{t('Port *')}</Label>
@@ -898,31 +987,49 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
             </div>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5">
-                <Label>{t('SNI')}</Label>
+                <Label>{isMtproto ? 'FakeTLS domain' : t('SNI')}</Label>
                 <Input value={sni} onChange={(e) => setSni(e.target.value)} />
               </div>
-              <div className="space-y-1.5">
-                <Label>{t('Transport')}</Label>
-                <Select value={transport} onValueChange={setTransport}>
-                  <SelectTrigger aria-label={t('Transport')}><SelectValue /></SelectTrigger>
-                  <SelectContent>{TRANSPORTS.map((tr) => <SelectItem key={tr} value={tr}>{tr}</SelectItem>)}</SelectContent>
-                </Select>
-              </div>
-              <div className="flex items-center justify-between gap-2 rounded-lg border px-3">
-                <Label htmlFor="a-tls" className="text-xs">TLS</Label>
-                <Switch id="a-tls" checked={tls} onCheckedChange={setTls} />
-              </div>
+              {showStream && (
+                <>
+                  <div className="space-y-1.5">
+                    <Label>{t('Transport')}</Label>
+                    <Select value={transport} onValueChange={setTransport}>
+                      <SelectTrigger aria-label={t('Transport')}><SelectValue /></SelectTrigger>
+                      <SelectContent>{TRANSPORTS.map((tr) => <SelectItem key={tr} value={tr}>{tr}</SelectItem>)}</SelectContent>
+                    </Select>
+                  </div>
+                  <div className="flex items-center justify-between gap-2 rounded-lg border px-3">
+                    <Label htmlFor="a-tls" className="text-xs">TLS</Label>
+                    <Switch id="a-tls" checked={tls} onCheckedChange={setTls} />
+                  </div>
+                </>
+              )}
             </div>
-            <div className="grid grid-cols-2 gap-3">
-              <div className="space-y-1.5">
-                <Label>{transport === 'grpc' ? t('Service name') : t('WS path')}</Label>
-                <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/" />
+            {showStream && (
+              <div className="grid grid-cols-2 gap-3">
+                <div className="space-y-1.5">
+                  <Label>{transport === 'grpc' ? t('Service name') : t('WS path')}</Label>
+                  <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/" />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>{t('Host header')}</Label>
+                  <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t('optional')} />
+                </div>
               </div>
+            )}
+            {showFragment && (
               <div className="space-y-1.5">
-                <Label>{t('Host header')}</Label>
-                <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t('optional')} />
+                <Label>{t('Fragment (anti-filter)')}</Label>
+                <Input value={fragment} onChange={(e) => setFragment(e.target.value)} placeholder="100-200,20-30,tlshello" dir="ltr" className="font-mono text-xs" />
               </div>
-            </div>
+            )}
+            {isMtproto && (
+              <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('MTProto: address = server IP, port = proxy port — the secret is generated automatically. Users open the link in Telegram.')}</p>
+            )}
+            {isSingboxLike && (
+              <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('Hysteria2/TUIC need a sing-box based server (Hiddify, s-ui, …); the config file has both client and server JSON.')}</p>
+            )}
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>{t('Cancel')}</Button>
@@ -936,43 +1043,4 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
   )
 }
 
-// client-side replica of buildShareLink so links are copyable in the UI
-function buildClientLink(p: ProxyRow): string {
-  const remark = encodeURIComponent(p.remark || p.protocol)
-  const security = p.tls ? 'tls' : 'none'
-  const q: string[] = []
-  if (p.protocol === 'vless') {
-    q.push(`type=${p.transport}`)
-    q.push(`security=${security}`)
-    if (p.sni) q.push(`sni=${encodeURIComponent(p.sni)}`)
-    if (p.host) q.push(`host=${encodeURIComponent(p.host)}`)
-    if (p.transport === 'ws' && p.path) q.push(`path=${encodeURIComponent(p.path)}`)
-    q.push('fp=chrome')
-    return `vless://${p.secret}@${p.address}:${p.port}?${q.join('&')}#${remark}`
-  }
-  if (p.protocol === 'vmess') {
-    const obj = {
-      v: '2',
-      ps: p.remark,
-      add: p.address,
-      port: String(p.port),
-      id: p.secret,
-      aid: '0',
-      scy: 'auto',
-      net: p.transport,
-      type: 'none',
-      host: p.host || '',
-      path: p.transport === 'ws' ? p.path || '' : '',
-      tls: p.tls ? 'tls' : '',
-      sni: p.sni || '',
-      fp: 'chrome',
-    }
-    return `vmess://${btoa(JSON.stringify(obj))}`
-  }
-  if (p.protocol === 'trojan') {
-    if (p.sni) q.push(`sni=${encodeURIComponent(p.sni)}`)
-    q.push(`type=${p.transport}`)
-    return `trojan://${encodeURIComponent(p.secret)}@${p.address}:${p.port}?${q.join('&')}#${remark}`
-  }
-  return `ss://${btoa(`aes-256-gcm:${p.secret}`)}@${p.address}:${p.port}#${remark}`
-}
+// client-side link building now uses the shared isomorphic builder in @/lib/links

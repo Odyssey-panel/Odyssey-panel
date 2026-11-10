@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 import { requireAuth, jsonSafe } from '@/lib/auth'
-import { buildServerConfig } from '@/lib/links'
-import { randomBytes } from 'node:crypto'
+import { buildServerConfig, isValidFragment } from '@/lib/links'
+import { generateSecret } from '@/lib/secrets'
 
 export const runtime = 'nodejs'
 
@@ -21,9 +21,14 @@ export async function PATCH(req: Request, { params }: Params) {
   }
   if (body.port !== undefined) data.port = Number(body.port)
   if (body.tls !== undefined) data.tls = Boolean(body.tls)
+  if (body.fragment !== undefined) {
+    if (!isValidFragment(String(body.fragment))) {
+      return Response.json({ error: 'Invalid fragment value' }, { status: 400 })
+    }
+    data.fragment = String(body.fragment).trim() || null
+  }
   if (body.rotateSecret === true) {
-    const isUuid = proxy.protocol === 'vless' || proxy.protocol === 'vmess'
-    data.secret = isUuid ? crypto.randomUUID() : randomBytes(16).toString('base64url')
+    data.secret = generateSecret(proxy.protocol)
   }
 
   const updated = await db.proxy.update({ where: { id }, data })

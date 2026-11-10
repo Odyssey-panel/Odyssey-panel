@@ -2,6 +2,8 @@ import { db } from '@/lib/db'
 import { requireAuth, jsonSafe } from '@/lib/auth'
 import { randomBytes } from 'node:crypto'
 import { buildServerConfig } from '@/lib/links'
+import { generateSecret, validateProtocol } from '@/lib/secrets'
+import { isValidFragment } from '@/lib/links'
 
 export const runtime = 'nodejs'
 
@@ -20,6 +22,7 @@ type CreateBody = {
   host?: string
   path?: string
   tls?: boolean
+  fragment?: string
 }
 
 export async function GET() {
@@ -65,8 +68,12 @@ export async function POST(req: Request) {
 
   // Optionally generate the first proxy account right away
   if (body.protocol && body.address && body.port) {
-    const isUuid = body.protocol === 'vless' || body.protocol === 'vmess'
-    const secret = isUuid ? crypto.randomUUID() : randomBytes(16).toString('base64url')
+    const protoErr = validateProtocol(body.protocol)
+    if (protoErr) return Response.json({ error: protoErr }, { status: 400 })
+    if (body.fragment && !isValidFragment(body.fragment)) {
+      return Response.json({ error: 'Invalid fragment value' }, { status: 400 })
+    }
+    const secret = generateSecret(body.protocol)
     const proxyLike = {
       protocol: body.protocol,
       // every Odyssey config is named "Odyssey-<username>"
@@ -79,6 +86,7 @@ export async function POST(req: Request) {
       path: body.path || '/',
       transport: body.transport || 'ws',
       tls: body.tls ?? true,
+      fragment: body.fragment?.trim() || null,
     }
     await db.proxy.create({
       data: {
@@ -93,6 +101,7 @@ export async function POST(req: Request) {
         path: proxyLike.path,
         transport: proxyLike.transport,
         tls: proxyLike.tls,
+        fragment: proxyLike.fragment,
         serverConfig: JSON.stringify(buildServerConfig(proxyLike)),
       },
     })

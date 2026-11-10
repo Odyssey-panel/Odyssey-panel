@@ -1,7 +1,7 @@
 import { db } from '@/lib/db'
 import { requireAuth, jsonSafe } from '@/lib/auth'
-import { randomBytes } from 'node:crypto'
-import { buildServerConfig } from '@/lib/links'
+import { buildServerConfig, isValidFragment } from '@/lib/links'
+import { generateSecret, validateProtocol } from '@/lib/secrets'
 
 export const runtime = 'nodejs'
 
@@ -17,6 +17,7 @@ type ProxyBody = {
   path?: string
   transport?: string
   tls?: boolean
+  fragment?: string
 }
 
 export async function POST(req: Request, { params }: Params) {
@@ -28,8 +29,10 @@ export async function POST(req: Request, { params }: Params) {
 
   const body = (await req.json().catch(() => ({}))) as ProxyBody
   const protocol = body.protocol || 'vless'
-  if (!['vless', 'vmess', 'trojan', 'shadowsocks'].includes(protocol)) {
-    return Response.json({ error: 'Invalid protocol' }, { status: 400 })
+  const protoErr = validateProtocol(protocol)
+  if (protoErr) return Response.json({ error: protoErr }, { status: 400 })
+  if (body.fragment !== undefined && !isValidFragment(body.fragment)) {
+    return Response.json({ error: 'Invalid fragment value' }, { status: 400 })
   }
   const address = (body.address || '').trim()
   const port = Number(body.port)
@@ -37,8 +40,7 @@ export async function POST(req: Request, { params }: Params) {
     return Response.json({ error: 'Valid address and port required' }, { status: 400 })
   }
 
-  const isUuid = protocol === 'vless' || protocol === 'vmess'
-  const secret = isUuid ? crypto.randomUUID() : randomBytes(16).toString('base64url')
+  const secret = generateSecret(protocol)
   const proxyLike = {
     protocol,
     // every Odyssey config is named "Odyssey-<username>" (unless overridden)
@@ -51,6 +53,7 @@ export async function POST(req: Request, { params }: Params) {
     path: body.path?.trim() || '/',
     transport: body.transport || 'ws',
     tls: body.tls ?? true,
+    fragment: body.fragment?.trim() || null,
   }
 
   const proxy = await db.proxy.create({
@@ -66,6 +69,7 @@ export async function POST(req: Request, { params }: Params) {
       path: proxyLike.path,
       transport: proxyLike.transport,
       tls: proxyLike.tls,
+      fragment: proxyLike.fragment,
       serverConfig: JSON.stringify(buildServerConfig(proxyLike)),
     },
   })

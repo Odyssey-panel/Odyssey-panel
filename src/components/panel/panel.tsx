@@ -19,6 +19,7 @@ import {
   Server,
   Radar,
   Settings as SettingsIcon,
+  Shield,
   Menu,
   LogOut,
   Moon,
@@ -33,9 +34,10 @@ import { DashboardView } from './views/dashboard'
 import { ClientsView } from './views/clients'
 import { NodesView } from './views/nodes'
 import { ScannerView } from './views/scanner'
+import { AntiFilterView } from './views/antifilter'
 import { SettingsView } from './views/settings'
 
-export type ViewKey = 'dashboard' | 'clients' | 'nodes' | 'scanner' | 'settings'
+export type ViewKey = 'dashboard' | 'clients' | 'antifilter' | 'nodes' | 'scanner' | 'settings'
 
 export const NAV_ITEMS: {
   key: ViewKey
@@ -44,6 +46,7 @@ export const NAV_ITEMS: {
 }[] = [
   { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { key: 'clients', label: 'Users', icon: Users },
+  { key: 'antifilter', label: 'Anti-filter', icon: Shield },
   { key: 'nodes', label: 'Nodes & Workers', icon: Server },
   { key: 'scanner', label: 'Scanner', icon: Radar },
   { key: 'settings', label: 'Settings', icon: SettingsIcon },
@@ -70,9 +73,6 @@ export function Logo({ compact = false }: { compact?: boolean }) {
       <div className="min-w-0">
         <div className="flex items-center gap-2">
           <OdysseyWordmark size="sm" tagline={false} />
-          <span className="rounded-full bg-odyssey-cyan/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-odyssey-cyan ring-1 ring-inset ring-odyssey-cyan/30 dark:text-odyssey-bright">
-            {t('Free')}
-          </span>
         </div>
         {!compact && (
           <div className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
@@ -144,6 +144,8 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
         return <DashboardView onNavigate={setView} />
       case 'clients':
         return <ClientsView />
+      case 'antifilter':
+        return <AntiFilterView />
       case 'nodes':
         return <NodesView />
       case 'scanner':
@@ -199,7 +201,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
           className="glass fixed inset-x-0 bottom-0 z-40 border-t bg-background/80 pb-[max(env(safe-area-inset-bottom),0.4rem)] pt-1.5 backdrop-blur-xl"
           aria-label="Mobile navigation"
         >
-          <div className="mx-auto grid max-w-md grid-cols-5">
+          <div className="mx-auto grid max-w-md grid-cols-6">
             {NAV_ITEMS.map((item) => {
               const active = view === item.key
               return (
@@ -318,9 +320,9 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
           <span className="flex items-center gap-2">
             <OdysseyEmblem className="h-4 w-4" />
             <span dir="ltr" className="font-display font-semibold uppercase tracking-[0.25em]">Odyssey</span>
-            <span>· {t('Free forever')}</span>
+            <span>· {t('Anti-censorship control plane')}</span>
           </span>
-          <span className="hidden sm:inline">{t('Free · self-hosted · works on any domain')}</span>
+          <span className="hidden sm:inline">{t('multi-protocol · anti-filter · self-hosted')}</span>
         </div>
       </footer>
     </div>

@@ -61,8 +61,8 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
             </div>
           )}
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-odyssey-cyan/12 px-3 py-1 text-[11px] font-semibold text-odyssey-deep ring-1 ring-inset ring-odyssey-cyan/30 dark:text-odyssey-bright">
-            <span className="h-1.5 w-1.5 rounded-full bg-odyssey-cyan" />
-            {t('Free forever')} · {t('self-hosted proxy & subscription panel')}
+            <span className="h-1.5 w-1.5 rounded-full bg-odyssey-cyan animate-breathe" />
+            {t('multi-protocol · anti-filter · self-hosted')}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
             {t('Sign in to manage users, nodes and subscription links')}
@@ -95,7 +95,7 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
         </form>
 
         <p className="mt-5 text-center text-[11px] text-muted-foreground/70">
-          {t('Free · self-hosted · works on any domain')}
+          {t('Anti-censorship control plane')}
         </p>
       </div>
     </div>

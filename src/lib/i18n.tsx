@@ -14,8 +14,6 @@ const FA: Record<string, string> = {
   'User created — no server address given, so no proxy account was generated':
     'کاربر ساخته شد — چون آدرس سرور ندادی، کانفیگی ساخته نشد؛ بعداً از مدیریت کاربر اضافه کن',
   'Personal proxy control center': 'مرکز کنترل شخصی پروکسی',
-  Free: 'رایگان',
-  'Free forever': 'همیشه رایگان',
   Dashboard: 'داشبورد',
   Users: 'کاربران',
   'Nodes & Workers': 'نودها و ورکرها',
@@ -33,7 +31,8 @@ const FA: Record<string, string> = {
   Admin: 'مدیر',
   'Full access': 'دسترسی کامل',
   'Loading panel…': 'در حال بارگذاری پنل…',
-  'Free · self-hosted · works on any domain': 'رایگان · سلف‌هاست · روی هر دامنه‌ای کار می‌کند',
+  'multi-protocol · anti-filter · self-hosted': 'چند-پروتکل · ضد فیلترینگ · سلف‌هاست',
+  'Anti-censorship control plane': 'سامانه کنترل ضد فیلترینگ',
   'Two layouts: this is the {device} view': 'دو چیدمان داریم: این نمای {device} است',
   desktop: 'دسکتاپ',
   mobile: 'موبایل',
@@ -50,8 +49,6 @@ const FA: Record<string, string> = {
   'Default password is': 'رمز پیش‌فرض',
   '— change it in Settings.': '— بعداً از تنظیمات عوضش کن.',
   'self-hosted proxy & subscription panel': 'پنل سلف‌هاست پروکسی و اشتراک',
-  'Manage users, traffic limits and subscription links — completely free, on your own domain.':
-    'مدیریت کاربران، محدودیت ترافیک و لینک‌های اشتراک — کاملاً رایگان، روی دامنه خودت.',
 
   // ── Dashboard ────────────────────────────────────────────────────────
   Overview: 'نمای کلی',
@@ -68,6 +65,13 @@ const FA: Record<string, string> = {
   'Cloudflare workers & endpoints': 'ورکرهای کلادفلر و اندپوینت‌ها',
   'Proxy accounts': 'حساب‌های پروکسی',
   'all proxy accounts': 'همه حساب‌های پروکسی',
+  RAM: 'RAM',
+  'Live memory usage of the panel container': 'مصرف زنده RAM کانتینر پنل',
+  System: 'سیستم',
+  Uptime: 'آپ‌تایم',
+  'Protocols': 'پروتکل‌ها',
+  'Active protocols across all accounts': 'پروتکل‌های فعال روی همه حساب‌ها',
+  'No accounts yet — create one to see the breakdown': 'هنوز حسابی نیست — یکی بساز تا اینجا نمایش داده شود',
   'Traffic allocation': 'ترافیک تخصیص‌یافته',
   'Sum across all users': 'مجموع روی همه کاربران',
   used: 'مصرف‌شده',
@@ -90,6 +94,48 @@ const FA: Record<string, string> = {
     'ساخت کاربر، بررسی سرورها یا اسکن یک هاست — همه‌چیز از یک‌جا.',
   'Check nodes': 'بررسی نودها',
   'Add node': 'افزودن نود',
+
+  // ── Anti-filter ───────────────────────────────────────────────────────
+  'Anti-filter': 'ضد فیلترینگ',
+  'Fragment & operator presets for Iranian ISPs': 'فرگمنت و پریست اپراتورهای اینترنت ایران',
+  'What is fragment?': 'فرگمنت چیست؟',
+  'Fragment splits the TLS handshake into small pieces so the filtering boxes cannot read the SNI — blocked CDN domains become reachable again on many Iranian ISPs. These values are editable defaults; tune them for your own line.':
+    'فرگمنت دست‌دهی TLS را به تکه‌های کوچک می‌شکند تا تجهیزات فیلترینگ نتوانند SNI را بخوانند — به همین دلیل دامنه‌های مسدودشده روی خیلی از اپراتورهای ایران دوباره در دسترس می‌شوند. این مقادیر پیش‌فرضِ قابل‌ویرایش‌اند؛ برای خط خودت تنظیمشان کن.',
+  Packets: 'بسته‌ها',
+  Length: 'طول (بایت)',
+  Interval: 'فاصله (میلی‌ثانیه)',
+  'Recommended port': 'پورت پیشنهادی',
+  'Recommended transport': 'ترنسپورت پیشنهادی',
+  'Recommended SNI': 'SNI پیشنهادی',
+  'Save preset': 'ذخیره پریست',
+  'Preset saved': 'پریست ذخیره شد',
+  'Reset to default': 'بازگشت به پیش‌فرض',
+  'Apply to all accounts': 'اعمال روی همه حساب‌ها',
+  'Applied to {n} accounts': 'روی {n} حساب اعمال شد',
+  'Copy fragment': 'کپی فرگمنت',
+  'Enable manually in your client': 'فعال‌سازی دستی در کلاینت',
+  'Hiddify: Settings → All Config Options → TLS Fragment · v2rayNG: Settings → Fragment · Streisand: tap the config → Fragment. Paste the same values there.':
+    'Hiddify: تنظیمات ← All Config Options ← TLS Fragment · v2rayNG: تنظیمات ← Fragment · Streisand: روی کانفیگ بزن ← Fragment. همین مقادیر را آنجا وارد کن.',
+  'Server address type': 'نوع آدرس سرور',
+  'Paste a server address — the panel detects the type and auto-wraps IPv6 in [] inside the links.':
+    'آدرس سرور را وارد کن — پنل نوعش را تشخیص می‌دهد و IPv6 را خودکار داخل [] در لینک‌ها قرار می‌دهد.',
+  'Use current panel address': 'استفاده از آدرس فعلی پنل',
+  detected: 'تشخیص',
+  'IPv4 address': 'آدرس IPv4',
+  'IPv6 address': 'آدرس IPv6',
+  Domain: 'دامنه',
+  'Quick fill from operator': 'پرکردن سریع از اپراتور',
+  'Fragment (anti-filter)': 'فرگمنت (ضد فیلترینگ)',
+  'fragment active': 'فرگمنت فعال',
+  'no fragment': 'بدون فرگمنت',
+  'Import in one tap': 'اتصال فوری',
+  'Tap an app — it imports the subscription instantly': 'روی اپ بزن — اشتراک فوراً ایمپورت می‌شود',
+  'Telegram proxy (MTProto)': 'پروکسی تلگرام (MTProto)',
+  'Open in Telegram': 'باز کردن در تلگرام',
+  'MTProto: address = server IP, port = proxy port — the secret is generated automatically. Users open the link in Telegram.':
+    'MTProto: آدرس = IP سرور، پورت = پورت پروکسی — رمز خودکار ساخته می‌شود. کاربر لینک را در تلگرام باز می‌کند.',
+  'Hysteria2/TUIC need a sing-box based server (Hiddify, s-ui, …); the config file has both client and server JSON.':
+    'Hysteria2/TUIC به سرور مبتنی بر sing-box نیاز دارند (Hiddify، s-ui و…)؛ فایل کانفیگ شامل JSON کلاینت و سرور است.',
 
   // ── Users / clients ──────────────────────────────────────────────────
   Subscribers: 'مشترکین',
@@ -130,7 +176,7 @@ const FA: Record<string, string> = {
   Note: 'یادداشت',
   'friend, family, …': 'دوست، خانواده، …',
   'Generate proxy account now': 'ساخت فوری حساب پروکسی',
-  'VLESS/VMess get a UUID; Trojan/SS get a password': 'به VLESS/VMess یک UUID و به Trojan/SS یک رمز داده می‌شود',
+  'VLESS/VMess get a UUID; Trojan/SS get a password': 'VLESS/VMess یک UUID می‌گیرند؛ Trojan/SS رمز؛ TUIC به شکل uuid:password و MTProto رمز dd…',
   Protocol: 'پروتکل',
   'Server address / IP *': 'آدرس سرور / IP *',
   'Port *': 'پورت *',
@@ -158,7 +204,7 @@ const FA: Record<string, string> = {
     'اشتراک و حساب‌های پروکسی — همه‌چیز از دامنه‌ای که پنل روش اجراست سرو می‌شود.',
   Subscription: 'اشتراک',
   'Subscription link': 'لینک اشتراک',
-  'Config address (vless://)': 'آدرس کانفیگ (vless://)',
+  'Config address': 'آدرس کانفیگ',
   'No config yet — open Manage and add a proxy account to get its vless:// address':
     'هنوز کانفیگی ساخته نشده — از «مدیریت» یه حساب پروکسی با آدرس سرور اضافه کن تا آدرس vless:// اینجا نمایش داده بشه',
   'No config yet — add a proxy account (with a server address) and its vless:// address will appear here':
