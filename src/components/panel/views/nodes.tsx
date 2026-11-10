@@ -34,9 +34,11 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { StatusBadge } from '../status-badge'
+import { CopyButton } from '../copy'
 import { api, useApi } from '../api'
 import { formatDateTime, daysLeft } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
+import { WORKER_CODE, WORKER_STEPS_FA } from '@/lib/worker-kit'
 import { toast } from 'sonner'
 import {
   Plus,
@@ -45,6 +47,8 @@ import {
   Trash2,
   Loader2,
   Globe,
+  ChevronDown,
+  Code2,
 } from 'lucide-react'
 
 type NodeRow = {
@@ -205,6 +209,7 @@ export function NodesView() {
         </TabsContent>
 
         <TabsContent value="workers" className="mt-4 space-y-3">
+          <WorkerKitCard />
           {workersApi.loading && !workersApi.data ? (
             <Skeleton className="h-20" />
           ) : !workersApi.data?.workers.length ? (
@@ -488,5 +493,68 @@ function AddWorkerDialog({ open, onOpenChange, onDone }: { open: boolean; onOpen
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Worker kit — ready-to-deploy Cloudflare Worker + Persian setup guide
+// ---------------------------------------------------------------------------
+
+function WorkerKitCard() {
+  const { t, lang } = useLang()
+  const [open, setOpen] = useState(false)
+  const steps = lang === 'fa' ? WORKER_STEPS_FA : [
+    'Sign in to Cloudflare and open Workers & Pages.',
+    'Create → Create Worker, pick a name (e.g. odyssey) and deploy.',
+    'Edit code → replace everything with the code below → Deploy.',
+    'Copy your https://<worker>.<account>.workers.dev URL and register it here.',
+    'When creating a user account, choose "Cloudflare worker" as the source and pick it.',
+  ]
+  return (
+    <Card className="border-odyssey-cyan/25">
+      <CardContent className="p-4">
+        <button
+          type="button"
+          onClick={() => setOpen(!open)}
+          className="flex w-full items-center justify-between gap-2 text-start"
+          aria-expanded={open}
+        >
+          <span className="flex min-w-0 items-center gap-2">
+            <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-amber-500/15 ring-1 ring-inset ring-amber-400/25">
+              <Code2 className="h-3.5 w-3.5 text-amber-400" />
+            </span>
+            <span className="min-w-0">
+              <span className="block text-sm font-semibold">{t('Worker kit — turn Cloudflare into your VPN exit (free)')}</span>
+              <span className="block truncate text-xs text-muted-foreground">
+                {t('Copy-paste the worker code, deploy in ~3 minutes, register the URL here.')}
+              </span>
+            </span>
+          </span>
+          <ChevronDown className={`h-4 w-4 shrink-0 text-muted-foreground transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+        {open && (
+          <div className="mt-3 space-y-3">
+            <ol className="space-y-1.5">
+              {steps.map((s, i) => (
+                <li key={i} className="flex gap-2 text-xs leading-relaxed text-muted-foreground">
+                  <span className="mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-odyssey-cyan/15 text-[10px] font-bold text-odyssey-bright">
+                    {i + 1}
+                  </span>
+                  <span className="min-w-0">{s}</span>
+                </li>
+              ))}
+            </ol>
+            <div className="relative">
+              <pre className="max-h-72 overflow-auto rounded-lg border bg-black/40 p-3 text-left font-mono text-[11px] leading-relaxed text-emerald-200/90" dir="ltr">
+                {WORKER_CODE}
+              </pre>
+              <div className="absolute end-2 top-2">
+                <CopyButton value={WORKER_CODE} size="sm" />
+              </div>
+            </div>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }

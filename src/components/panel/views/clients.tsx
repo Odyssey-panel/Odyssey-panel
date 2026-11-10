@@ -60,7 +60,10 @@ import {
   Server,
   Send,
   Smartphone,
+  Cloud,
+  ShieldCheck,
 } from 'lucide-react'
+import { WORKER_STEPS_FA } from '@/lib/worker-kit'
 
 type ProxyRow = {
   id: string
@@ -97,6 +100,185 @@ const TRANSPORTS = ['ws', 'grpc', 'tcp'] as const
 const STREAM_PROTOS = new Set(['vless', 'vmess', 'trojan', 'shadowsocks'])
 /** Fragment only applies to URL-style TLS links (vless/trojan). */
 const FRAGMENT_PROTOS = new Set(['vless', 'trojan'])
+
+// ────────────────────────────────────────────────────────────────────────────
+// Backend source — where the account actually terminates.
+//  builtin → the panel's own xray backend (works out of the box)
+//  worker  → a Cloudflare Worker registered in Nodes & workers
+//  own     → the admin's own VPS/server (manual fields)
+// ────────────────────────────────────────────────────────────────────────────
+
+type BackendMode = 'builtin' | 'worker' | 'own'
+
+type WorkerRow = {
+  id: string
+  name: string
+  url: string
+  status: string
+  note: string | null
+}
+
+function panelOrigin(): string {
+  return typeof window !== 'undefined' ? window.location.origin : ''
+}
+
+function hostFromUrl(url: string): string {
+  try {
+    return new URL(url).hostname
+  } catch {
+    return url.replace(/^https?:\/\//i, '').split('/')[0]
+  }
+}
+
+function pathFromUrl(url: string): string {
+  try {
+    const u = new URL(url)
+    return u.pathname && u.pathname !== '/' ? u.pathname : '/'
+  } catch {
+    return '/'
+  }
+}
+
+/** Submit fields for the chosen backend source. */
+function backendSubmitFields(
+  mode: BackendMode,
+  worker: WorkerRow | null,
+  manual: { address: string; port: string; sni: string; host: string; path: string; transport: string; tls: boolean },
+) {
+  if (mode === 'builtin') {
+    const origin = panelOrigin()
+    const h = hostFromUrl(origin)
+    return {
+      address: origin,
+      port: 443,
+      sni: h,
+      host: h,
+      path: '/vlessws',
+      transport: 'ws',
+      tls: true,
+    }
+  }
+  if (mode === 'worker' && worker) {
+    const h = hostFromUrl(worker.url)
+    return {
+      address: h,
+      port: 443,
+      sni: h,
+      host: h,
+      path: pathFromUrl(worker.url),
+      transport: 'ws',
+      tls: true,
+    }
+  }
+  return {
+    address: manual.address.trim(),
+    port: Number(manual.port) || 443,
+    sni: manual.sni.trim() || undefined,
+    host: manual.host.trim() || undefined,
+    path: manual.path.trim() || '/',
+    transport: manual.transport,
+    tls: manual.tls,
+  }
+}
+
+/** URL-paste repair on blur — "https://host:8443/ws" fills the fields. */
+function repairPastedAddress(value: string): { address: string; port?: string; path?: string; tls?: boolean; sni?: string } | null {
+  const v = value.trim()
+  if (!/^https?:\/\//i.test(v)) return null
+  try {
+    const u = new URL(v)
+    return {
+      address: u.hostname,
+      port: u.port || undefined,
+      path: u.pathname !== '/' ? u.pathname : undefined,
+      tls: u.protocol === 'https:' ? true : false,
+      sni: u.hostname,
+    }
+  } catch {
+    return null
+  }
+}
+
+function BackendPicker({
+  mode,
+  onModeChange,
+  workers,
+  workerId,
+  onWorkerIdChange,
+}: {
+  mode: BackendMode
+  onModeChange: (m: BackendMode) => void
+  workers: WorkerRow[] | undefined
+  workerId: string
+  onWorkerIdChange: (id: string) => void
+}) {
+  const { t } = useLang()
+  const options: { id: BackendMode; label: string; icon: typeof Server; desc: string }[] = [
+    { id: 'builtin', label: t('Odyssey built-in'), icon: ShieldCheck, desc: t('Ready in 0 seconds — runs on this panel') },
+    { id: 'worker', label: t('Cloudflare worker'), icon: Cloud, desc: t('Iran-optimized via your worker') },
+    { id: 'own', label: t('My own server'), icon: Server, desc: t('VPS / custom host') },
+  ]
+  const workerList = workers || []
+  return (
+    <div className="space-y-2">
+      <div className="grid grid-cols-3 gap-1.5">
+        {options.map((o) => {
+          const active = mode === o.id
+          return (
+            <button
+              key={o.id}
+              type="button"
+              onClick={() => onModeChange(o.id)}
+              className={cnPicker(active)}
+              title={o.desc}
+            >
+              <o.icon className="h-3.5 w-3.5 shrink-0" />
+              <span className="truncate text-[11px] font-medium leading-tight">{o.label}</span>
+            </button>
+          )
+        })}
+      </div>
+      {mode === 'builtin' && (
+        <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">
+          {t('The config will run on this panel itself (wss) — nothing else to set up. The address fields below are filled automatically.')}
+        </p>
+      )}
+      {mode === 'worker' && (
+        <div className="space-y-1.5">
+          {workerList.length === 0 ? (
+            <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">
+              {t('No worker registered yet — add one in Nodes & workers (the worker code and step-by-step guide are there).')}
+            </p>
+          ) : (
+            <Select value={workerId} onValueChange={onWorkerIdChange}>
+              <SelectTrigger aria-label={t('Worker')}><SelectValue placeholder={t('Pick a worker')} /></SelectTrigger>
+              <SelectContent>
+                {workerList.map((w) => (
+                  <SelectItem key={w.id} value={w.id}>
+                    {w.name} · {hostFromUrl(w.url)}
+                  </SelectItem>
+                ))
+                }
+              </SelectContent>
+            </Select>
+          )}
+          <p className="text-[11px] leading-relaxed text-muted-foreground">
+            {WORKER_STEPS_FA[3]}
+          </p>
+        </div>
+      )}
+    </div>
+  )
+}
+
+function cnPicker(active: boolean): string {
+  return [
+    'flex items-center justify-center gap-1.5 rounded-lg border px-2 py-2 transition-colors',
+    active
+      ? 'border-cyan-400/40 bg-cyan-400/10 text-foreground'
+      : 'border-border/60 text-muted-foreground hover:bg-white/[0.04]',
+  ].join(' ')
+}
 
 function originBase(): string {
   if (typeof window === 'undefined') return ''
@@ -360,6 +542,9 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const [note, setNote] = useState('')
   const [withAccount, setWithAccount] = useState(true)
   const [protocol, setProtocol] = useState<string>('vless')
+  const [backendMode, setBackendMode] = useState<BackendMode>('builtin')
+  const [workerId, setWorkerId] = useState('')
+  const { data: workersData } = useApi<{ workers: WorkerRow[] }>(open ? '/api/admin/workers' : null)
   const [address, setAddress] = useState('')
   const [port, setPort] = useState('443')
   const [sni, setSni] = useState('')
@@ -373,17 +558,24 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const isMtprotoC = protocol === 'mtproto'
   const isSingboxC = protocol === 'hysteria2' || protocol === 'tuic'
   const showStreamC = STREAM_PROTOS.has(protocol)
+  const usePicker = showStreamC
+  const workers = workersData?.workers
+  const pickedWorker = workers?.find((w) => w.id === workerId) || null
 
   const submit = async () => {
     if (!name.trim()) {
       toast.error(t('Name is required'))
       return
     }
-    // A user is valid with just a name. If “generate proxy account” is on but
-    // no server address was filled, silently create the user without an
-    // account instead of blocking the button (old behavior confused users).
-    const withProxy = withAccount && Boolean(address.trim())
-    const skippedProxy = withAccount && !address.trim()
+    // A user is valid with just a name. With the built-in backend the account
+    // needs zero extra input; for other sources an address must be present.
+    const fields = backendSubmitFields(backendMode, pickedWorker, { address, port, sni, host, path, transport, tls })
+    const withProxy = withAccount && (usePicker ? backendMode === 'builtin' || Boolean(fields.address) : Boolean(fields.address))
+    const skippedProxy = withAccount && !withProxy
+    if (withProxy && usePicker && backendMode === 'worker' && !pickedWorker) {
+      toast.error(t('Pick a worker first (or register one in Nodes & workers)'))
+      return
+    }
     setBusy(true)
     try {
       await api('/api/admin/clients', {
@@ -394,13 +586,13 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
           days: Number(days) || 0,
           note: note.trim() || undefined,
           protocol: withProxy ? protocol : undefined,
-          address: withProxy ? address.trim() : undefined,
-          port: withProxy ? Number(port) : undefined,
-          sni: withProxy ? sni.trim() || undefined : undefined,
-          transport: withProxy && !isMtprotoC && !isSingboxC ? transport : undefined,
-          path: withProxy && !isMtprotoC && !isSingboxC ? path.trim() || undefined : undefined,
-          host: withProxy && !isMtprotoC && !isSingboxC ? host.trim() || undefined : undefined,
-          tls: withProxy && !isMtprotoC && !isSingboxC ? tls : true,
+          address: withProxy ? fields.address : undefined,
+          port: withProxy ? fields.port : undefined,
+          sni: withProxy ? fields.sni : undefined,
+          transport: withProxy && !isMtprotoC && !isSingboxC ? fields.transport : undefined,
+          path: withProxy && !isMtprotoC && !isSingboxC ? fields.path : undefined,
+          host: withProxy && !isMtprotoC && !isSingboxC ? fields.host : undefined,
+          tls: withProxy && !isMtprotoC && !isSingboxC ? fields.tls : true,
         }),
       })
       toast.success(
@@ -467,11 +659,41 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-1.5 sm:col-span-2">
-                  <Label>{t('Server address / IP *')}</Label>
-                  <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="vps.example.com یا 2001:db8::1" />
-                </div>
+                {usePicker && backendMode !== 'own' ? (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>{t('Where the config runs')}</Label>
+                    <BackendPicker
+                      mode={backendMode}
+                      onModeChange={setBackendMode}
+                      workers={workers}
+                      workerId={workerId}
+                      onWorkerIdChange={setWorkerId}
+                    />
+                  </div>
+                ) : (
+                  <div className="space-y-1.5 sm:col-span-2">
+                    <Label>{t('Server address / IP *')}</Label>
+                    <Input
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      onBlur={() => {
+                        const r = repairPastedAddress(address)
+                        if (r) {
+                          setAddress(r.address)
+                          if (r.port) setPort(r.port)
+                          if (r.path) setPath(r.path)
+                          if (r.tls !== undefined) setTls(r.tls)
+                          if (r.sni && !sni.trim()) setSni(r.sni)
+                          toast.success(t('Pasted URL detected — fields were filled automatically'))
+                        }
+                      }}
+                      placeholder="vps.example.com یا 2001:db8::1 یا https://foo.workers.dev"
+                    />
+                  </div>
+                )}
               </div>
+              {(!usePicker || backendMode === 'own') && (
+                <>
               <div className="grid gap-3 sm:grid-cols-3">
                 <div className="space-y-1.5">
                   <Label>{t('Port *')}</Label>
@@ -508,6 +730,8 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                     <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t('optional')} />
                   </div>
                 </div>
+              )}
+                </>
               )}
               {isMtprotoC && (
                 <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('MTProto: address = server IP, port = proxy port — the secret is generated automatically. Users open the link in Telegram.')}</p>
@@ -880,6 +1104,9 @@ function RotateAccountButton({ proxy, onDone }: { proxy: ProxyRow; onDone: () =>
 function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: string; onAdded: () => Promise<void>; defaultRemark: string }) {
   const [open, setOpen] = useState(false)
   const [protocol, setProtocol] = useState('vless')
+  const [backendMode, setBackendMode] = useState<BackendMode>('builtin')
+  const [workerId, setWorkerId] = useState('')
+  const { data: workersData } = useApi<{ workers: WorkerRow[] }>(open ? '/api/admin/workers' : null)
   const [address, setAddress] = useState('')
   const [port, setPort] = useState('443')
   const [sni, setSni] = useState('')
@@ -896,25 +1123,38 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
   const isSingboxLike = protocol === 'hysteria2' || protocol === 'tuic'
   const showStream = STREAM_PROTOS.has(protocol)
   const showFragment = FRAGMENT_PROTOS.has(protocol)
+  const usePicker = showStream
+  const workers = workersData?.workers
+  const pickedWorker = workers?.find((w) => w.id === workerId) || null
 
   const applyIsp = (isp: (typeof ISP_PRESETS)[number]) => {
     setPort(isp.port)
     setSni(isp.sni)
     if (showStream) setTransport(isp.transport)
     if (showFragment) setFragment(`${isp.length},${isp.interval},${isp.packets}`)
+    if (showStream) setBackendMode('own') // manual preset → own server fields
   }
 
   const submit = async () => {
+    const fields = backendSubmitFields(backendMode, pickedWorker, { address, port, sni, host, path, transport, tls })
+    if (!fields.address) {
+      toast.error(t('Address is required'))
+      return
+    }
+    if (usePicker && backendMode === 'worker' && !pickedWorker) {
+      toast.error(t('Pick a worker first (or register one in Nodes & workers)'))
+      return
+    }
     setBusy(true)
     try {
       await api(`/api/admin/clients/${clientId}/proxies`, {
         method: 'POST',
         body: JSON.stringify({
-          protocol, address: address.trim(), port: Number(port), sni: sni.trim() || undefined,
-          transport: isMtproto || isSingboxLike ? undefined : transport,
-          path: isMtproto || isSingboxLike ? undefined : path.trim() || '/',
-          host: isMtproto || isSingboxLike ? undefined : host.trim() || undefined,
-          tls: isMtproto || isSingboxLike ? true : tls,
+          protocol, address: fields.address, port: fields.port, sni: fields.sni,
+          transport: isMtproto || isSingboxLike ? undefined : fields.transport,
+          path: isMtproto || isSingboxLike ? undefined : fields.path,
+          host: isMtproto || isSingboxLike ? undefined : fields.host,
+          tls: isMtproto || isSingboxLike ? true : fields.tls,
           fragment: showFragment ? fragment.trim() || undefined : undefined,
           remark: remark.trim() || undefined,
         }),
@@ -975,10 +1215,41 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
               </div>
             )}
 
+            {/* Where the config runs (backend source) */}
+            {usePicker && (
+              <div className="space-y-1.5">
+                <Label>{t('Where the config runs')}</Label>
+                <BackendPicker
+                  mode={backendMode}
+                  onModeChange={setBackendMode}
+                  workers={workers}
+                  workerId={workerId}
+                  onWorkerIdChange={setWorkerId}
+                />
+              </div>
+            )}
+
+            {(!usePicker || backendMode === 'own') && (
+              <>
             <div className="grid grid-cols-3 gap-3">
               <div className="space-y-1.5 sm:col-span-2">
                 <Label>{isMtproto ? t('Server address / IP *') : t('Address *')}</Label>
-                <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="vps.example.com یا 2001:db8::1" />
+                <Input
+                  value={address}
+                  onChange={(e) => setAddress(e.target.value)}
+                  onBlur={() => {
+                    const r = repairPastedAddress(address)
+                    if (r) {
+                      setAddress(r.address)
+                      if (r.port) setPort(r.port)
+                      if (r.path) setPath(r.path)
+                      if (r.tls !== undefined) setTls(r.tls)
+                      if (r.sni && !sni.trim()) setSni(r.sni)
+                      toast.success(t('Pasted URL detected — fields were filled automatically'))
+                    }
+                  }}
+                  placeholder="vps.example.com یا 2001:db8::1 یا https://foo.workers.dev"
+                />
               </div>
               <div className="space-y-1.5">
                 <Label>{t('Port *')}</Label>
@@ -1018,6 +1289,8 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
                 </div>
               </div>
             )}
+              </>
+            )}
             {showFragment && (
               <div className="space-y-1.5">
                 <Label>{t('Fragment (anti-filter)')}</Label>
@@ -1033,7 +1306,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>{t('Cancel')}</Button>
-            <Button onClick={submit} disabled={busy || !address.trim()}>
+            <Button onClick={submit} disabled={busy || (usePicker ? backendMode === 'own' && !address.trim() : !address.trim())}>
               {busy && <Loader2 className="h-4 w-4 animate-spin" />} {t('Generate')}
             </Button>
           </DialogFooter>

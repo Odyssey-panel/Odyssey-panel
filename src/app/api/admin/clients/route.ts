@@ -4,6 +4,7 @@ import { randomBytes } from 'node:crypto'
 import { buildServerConfig } from '@/lib/links'
 import { generateSecret, validateProtocol } from '@/lib/secrets'
 import { isValidFragment } from '@/lib/links'
+import { normalizeProxyTarget, panelHost, syncBackend } from '@/lib/backend'
 
 export const runtime = 'nodejs'
 
@@ -67,25 +68,37 @@ export async function POST(req: Request) {
   })
 
   // Optionally generate the first proxy account right away
-  if (body.protocol && body.address && body.port) {
+  if (body.protocol && body.address && body.address.trim()) {
     const protoErr = validateProtocol(body.protocol)
     if (protoErr) return Response.json({ error: protoErr }, { status: 400 })
     if (body.fragment && !isValidFragment(body.fragment)) {
       return Response.json({ error: 'Invalid fragment value' }, { status: 400 })
     }
     const secret = generateSecret(body.protocol)
+    const norm = normalizeProxyTarget(
+      {
+        address: body.address,
+        port: body.port,
+        sni: body.sni,
+        host: body.host,
+        path: body.path,
+        transport: body.transport,
+        tls: body.tls,
+      },
+      await panelHost(),
+    )
     const proxyLike = {
       protocol: body.protocol,
       // every Odyssey config is named "Odyssey-<username>"
       remark: `Odyssey-${name}`,
-      address: body.address,
-      port: Number(body.port),
+      address: norm.address,
+      port: norm.port ?? 443,
       secret,
-      sni: body.sni || null,
-      host: body.host || null,
-      path: body.path || '/',
-      transport: body.transport || 'ws',
-      tls: body.tls ?? true,
+      sni: norm.sni ?? null,
+      host: norm.host ?? null,
+      path: norm.path ?? '/',
+      transport: norm.transport ?? 'ws',
+      tls: norm.tls ?? true,
       fragment: body.fragment?.trim() || null,
     }
     await db.proxy.create({
@@ -108,6 +121,7 @@ export async function POST(req: Request) {
   }
 
   const created = await db.client.findUnique({ where: { id: client.id }, include: { proxies: true } })
+  syncBackend()
   return jsonSafe({ client: created }, { status: 201 })
 }
 
@@ -118,6 +132,7 @@ export async function DELETE(req: Request) {
   const { ids } = (await req.json().catch(() => ({}))) as { ids?: string[] }
   if (!ids?.length) return Response.json({ error: 'ids required' }, { status: 400 })
   await db.client.deleteMany({ where: { id: { in: ids } } })
+  syncBackend()
   return Response.json({ ok: true })
 }
 

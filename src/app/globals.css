@@ -405,3 +405,24 @@
     animation: none;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────────────────
+   Mobile hardening — long URLs / mono strings must never blow out a
+   responsive track. Implicit `auto` grid tracks (min-width: auto) refuse
+   to shrink below content, which pushed whole cards off-screen on phones.
+   Making every grid/flex child shrinkable fixes every view at once.
+   ───────────────────────────────────────────────────────────────────────── */
+.grid > * {
+  min-width: 0;
+}
+.flex > * {
+  min-width: 0;
+}
+html,
+body {
+  overflow-x: clip;
+}
+/* mono/link code chips wrap gracefully instead of forcing wide parents */
+code {
+  overflow-wrap: anywhere;
+}

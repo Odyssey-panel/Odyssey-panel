@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { requireAuth, jsonSafe } from '@/lib/auth'
 import { buildServerConfig, isValidFragment } from '@/lib/links'
 import { generateSecret } from '@/lib/secrets'
+import { normalizeProxyTarget, panelHost, syncBackend } from '@/lib/backend'
 
 export const runtime = 'nodejs'
 
@@ -16,10 +17,33 @@ export async function PATCH(req: Request, { params }: Params) {
   const body = (await req.json().catch(() => ({}))) as Record<string, unknown>
 
   const data: Record<string, unknown> = {}
-  for (const key of ['remark', 'address', 'sni', 'host', 'path', 'transport'] as const) {
+  for (const key of ['remark', 'sni', 'host', 'path', 'transport'] as const) {
     if (body[key] !== undefined) data[key] = String(body[key])
   }
-  if (body.port !== undefined) data.port = Number(body.port)
+  // address goes through URL repair (a pasted "https://host/path" must never
+  // end up verbatim in a vless:// link)
+  if (body.address !== undefined) {
+    const norm = normalizeProxyTarget(
+      {
+        address: String(body.address),
+        port: body.port !== undefined ? Number(body.port) : undefined,
+        sni: body.sni !== undefined ? String(body.sni) : undefined,
+        host: body.host !== undefined ? String(body.host) : undefined,
+        path: body.path !== undefined ? String(body.path) : undefined,
+        transport: body.transport !== undefined ? String(body.transport) : undefined,
+        tls: body.tls !== undefined ? Boolean(body.tls) : undefined,
+      },
+      await panelHost(),
+    )
+    data.address = norm.address
+    if (norm.port !== undefined) data.port = norm.port
+    if (norm.sni !== undefined) data.sni = norm.sni
+    if (norm.host !== undefined) data.host = norm.host
+    if (norm.path !== undefined) data.path = norm.path
+    if (norm.transport !== undefined) data.transport = norm.transport
+    if (norm.tls !== undefined) data.tls = norm.tls
+  }
+  if (body.port !== undefined && data.port === undefined) data.port = Number(body.port)
   if (body.tls !== undefined) data.tls = Boolean(body.tls)
   if (body.fragment !== undefined) {
     if (!isValidFragment(String(body.fragment))) {
@@ -54,6 +78,7 @@ export async function PATCH(req: Request, { params }: Params) {
     },
   })
   const fresh = await db.proxy.findUnique({ where: { id } })
+  syncBackend()
   return jsonSafe({ proxy: fresh })
 }
 
@@ -62,5 +87,6 @@ export async function DELETE(_req: Request, { params }: Params) {
   if (unauthorized) return unauthorized
   const { id } = await params
   await db.proxy.delete({ where: { id } })
+  syncBackend()
   return Response.json({ ok: true })
 }

@@ -31,6 +31,15 @@ ENV NODE_ENV=production \
 
 RUN apk add --no-cache openssl su-exec && addgroup -g 1001 -S nodejs && adduser -S panel -u 1001
 
+# built-in VPN backend (xray-core): powers vless+ws on the panel's own domain
+# under /vlessws so generated configs genuinely work with zero external setup
+ADD https://github.com/XTLS/Xray-core/releases/download/v26.11.9/Xray-linux-64.zip /tmp/xray.zip
+RUN apk add --no-cache unzip \
+ && unzip -o /tmp/xray.zip xray -d /app/bin \
+ && chmod +x /app/bin/xray \
+ && rm -f /tmp/xray.zip \
+ && apk del unzip
+
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
@@ -39,6 +48,9 @@ COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/scripts/boot.sh ./scripts/boot.sh
 COPY --from=builder /app/scripts/ensure-db.mjs ./scripts/ensure-db.mjs
+COPY --from=builder /app/scripts/edge.js ./scripts/edge.js
+COPY --from=builder /app/scripts/xray-sync.mjs ./scripts/xray-sync.mjs
+COPY --from=builder /app/scripts/migrate-addresses.mjs ./scripts/migrate-addresses.mjs
 # full prisma CLI (complete dependency tree incl. 'effect' etc.) so that
 # `prisma db push` genuinely works at runtime for future schema upgrades
 RUN npm install -g --no-audit --no-fund prisma@6.19.2

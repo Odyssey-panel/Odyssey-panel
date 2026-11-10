@@ -45,5 +45,11 @@ node scripts/ensure-db.mjs || true
 echo "[boot] seeding defaults if empty…"
 node prisma/seed.boot.mjs || true
 
-echo "[boot] starting server on port ${PORT:-8080}"
-exec node server.js
+echo "[boot] repairing URL-pasted addresses (one-time normalization)…"
+node scripts/migrate-addresses.mjs || true
+
+echo "[boot] preparing built-in backend (xray config)…"
+node scripts/xray-sync.mjs --config-only || true
+
+echo "[boot] starting edge router on port ${PORT:-8080} (next:8081 · xray-ws:/vlessws)"
+exec node scripts/edge.js

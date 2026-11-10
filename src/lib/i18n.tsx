@@ -205,6 +205,30 @@ const FA: Record<string, string> = {
   Subscription: 'اشتراک',
   'Subscription link': 'لینک اشتراک',
   'Config address': 'آدرس کانفیگ',
+  // ── built-in backend + worker kit + address normalization ──
+  'Odyssey built-in': 'داخلی پنل',
+  'Ready in 0 seconds — runs on this panel': 'بدون هیچ تنظیمی — همین پنل خودش سرور است',
+  'Cloudflare worker': 'ورکر کلادفلر',
+  'Iran-optimized via your worker': 'بهینه برای ایران از طریق ورکر خودت',
+  'My own server': 'سرور خودم',
+  'VPS / custom host': 'وی‌پی‌اس یا هاست دلخواه',
+  'Where the config runs': 'کانفیگ کجا اجرا بشه؟',
+  'The config will run on this panel itself (wss) — nothing else to set up. The address fields below are filled automatically.':
+    'کانفیگ روی همین پنل اجرا می‌شه (wss) — هیچ چیز دیگه‌ای لازم نیست؛ فیلدهای آدرس خودکار پر می‌شن.',
+  'No worker registered yet — add one in Nodes & workers (the worker code and step-by-step guide are there).':
+    'هنوز ورکری ثبت نشده — از «نودها و ورکرها» اضافه کن (کد ورکر و آموزش قدم‌به‌قدم اونجاست).',
+  'Pick a worker': 'یک ورکر انتخاب کن',
+  'Pick a worker first (or register one in Nodes & workers)':
+    'اول یک ورکر انتخاب کن (یا از «نودها و ورکرها» ثبتش کن)',
+  'Address is required': 'آدرس الزامی است',
+  'Pasted URL detected — fields were filled automatically':
+    'لینک تشخیص داده شد — فیلدها خودکار پر شدند',
+  'Worker kit — turn Cloudflare into your VPN exit (free)':
+    'کیت ورکر — کلادفلر را به خروجی رایگان VPN تبدیل کن',
+  'Copy-paste the worker code, deploy in ~3 minutes, register the URL here.':
+    'کد ورکر را کپی-پیست کن، حدود ۳ دقیقه‌ای دیپلوی کن و آدرسش را همین‌جا ثبت کن.',
+  'This panel (built-in backend)': 'همین پنل (بک‌اند داخلی)',
+
   'No config yet — open Manage and add a proxy account to get its vless:// address':
     'هنوز کانفیگی ساخته نشده — از «مدیریت» یه حساب پروکسی با آدرس سرور اضافه کن تا آدرس vless:// اینجا نمایش داده بشه',
   'No config yet — add a proxy account (with a server address) and its vless:// address will appear here':

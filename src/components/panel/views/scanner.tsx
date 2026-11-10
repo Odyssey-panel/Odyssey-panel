@@ -149,6 +149,7 @@ export function ScannerView() {
           <div className="flex flex-wrap gap-2 text-xs">
             <span className="py-1.5 text-muted-foreground">{t('Quick fills')}:</span>
             {[
+              { label: t('This panel (built-in backend)'), host: typeof window !== 'undefined' ? window.location.hostname : '', ports: '443', sni: typeof window !== 'undefined' ? window.location.hostname : '' },
               { label: 'cloudflare 443', host: 'cloudflare.com', ports: '443', sni: '' },
               { label: 'CF clean ports', host: 'cloudflare.com', ports: '443, 2053, 2083, 2087, 2096, 8443', sni: '' },
               { label: 'google.com', host: 'google.com', ports: '80, 443', sni: '' },

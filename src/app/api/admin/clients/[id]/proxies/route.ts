@@ -2,6 +2,7 @@ import { db } from '@/lib/db'
 import { requireAuth, jsonSafe } from '@/lib/auth'
 import { buildServerConfig, isValidFragment } from '@/lib/links'
 import { generateSecret, validateProtocol } from '@/lib/secrets'
+import { normalizeProxyTarget, panelHost, syncBackend } from '@/lib/backend'
 
 export const runtime = 'nodejs'
 
@@ -36,8 +37,24 @@ export async function POST(req: Request, { params }: Params) {
   }
   const address = (body.address || '').trim()
   const port = Number(body.port)
-  if (!address || !port || port < 1 || port > 65535) {
-    return Response.json({ error: 'Valid address and port required' }, { status: 400 })
+  if (!address) {
+    return Response.json({ error: 'Valid address required' }, { status: 400 })
+  }
+  const norm = normalizeProxyTarget(
+    {
+      address,
+      port,
+      sni: body.sni,
+      host: body.host,
+      path: body.path,
+      transport: body.transport,
+      tls: body.tls,
+    },
+    await panelHost(),
+  )
+  const finalPort = norm.port ?? port
+  if (!finalPort || finalPort < 1 || finalPort > 65535) {
+    return Response.json({ error: 'Valid port required' }, { status: 400 })
   }
 
   const secret = generateSecret(protocol)
@@ -45,14 +62,14 @@ export async function POST(req: Request, { params }: Params) {
     protocol,
     // every Odyssey config is named "Odyssey-<username>" (unless overridden)
     remark: body.remark?.trim() || `Odyssey-${client.name}`,
-    address,
-    port,
+    address: norm.address,
+    port: finalPort,
     secret,
-    sni: body.sni?.trim() || null,
-    host: body.host?.trim() || null,
-    path: body.path?.trim() || '/',
-    transport: body.transport || 'ws',
-    tls: body.tls ?? true,
+    sni: norm.sni ?? null,
+    host: norm.host ?? null,
+    path: norm.path ?? '/',
+    transport: norm.transport ?? 'ws',
+    tls: norm.tls ?? true,
     fragment: body.fragment?.trim() || null,
   }
 
@@ -73,5 +90,6 @@ export async function POST(req: Request, { params }: Params) {
       serverConfig: JSON.stringify(buildServerConfig(proxyLike)),
     },
   })
+  syncBackend()
   return jsonSafe({ proxy }, { status: 201 })
 }
