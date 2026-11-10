@@ -173,6 +173,7 @@ export function ClientsView() {
             const state = trafficState(c.usedBytes, c.limitBytes, c.status, c.expiresAt, lang)
             const pct = c.limitBytes > 0 ? Math.min(100, (c.usedBytes / c.limitBytes) * 100) : 0
             const dl = daysLeft(c.expiresAt)
+            const links = c.proxies.map((p) => buildClientLink(p)).filter(Boolean)
             return (
               <Card key={c.id} className="transition-colors hover:border-primary/30">
                 <CardContent className="p-4">
@@ -211,6 +212,32 @@ export function ClientsView() {
                       {c.limitBytes > 0 && (
                         <div className="mt-2 max-w-md">
                           <Progress value={pct} aria-label="Traffic used" />
+                        </div>
+                      )}
+                      {links.length > 0 && (
+                        <div className="mt-2.5 flex items-center gap-1.5" dir="ltr">
+                          <div className="min-w-0 flex-1 rounded-md border bg-muted/40 px-2.5 py-1.5">
+                            <p className="truncate font-mono text-[11px] text-muted-foreground">{links[0]}</p>
+                          </div>
+                          {links.length > 1 && (
+                            <Badge variant="outline" className="shrink-0 font-mono text-[10px]">
+                              +{links.length - 1}
+                            </Badge>
+                          )}
+                          <CopyButton
+                            value={links.length > 1 ? links.join('\n') : links[0]}
+                            label={t('Config')}
+                            className="shrink-0"
+                          />
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="shrink-0 px-2"
+                            aria-label={t('Show QR')}
+                            onClick={() => setQr({ open: true, value: links[0], name: c.name })}
+                          >
+                            <QrCode className="h-3.5 w-3.5" />
+                          </Button>
                         </div>
                       )}
                     </div>
@@ -620,6 +647,34 @@ function DetailDialog({
             <Link2 className="h-4 w-4 text-primary" /> {t('Subscription')}
           </div>
           <CopyField label={t('Subscription link')} value={sub} />
+          {client.proxies.length > 0 && (
+            <div className="space-y-1.5" dir="ltr">
+              <div className="text-xs font-medium text-muted-foreground" dir="rtl">
+                {t('Config address (vless://)')}
+              </div>
+              {client.proxies.map((p) => {
+                const link = buildClientLink(p)
+                if (!link) return null
+                return (
+                  <div key={p.id} className="flex items-center gap-1.5">
+                    <div className="min-w-0 flex-1 rounded-md border bg-muted/40 px-2.5 py-1.5">
+                      <p className="font-mono text-[11px] leading-relaxed break-all text-muted-foreground">{link}</p>
+                    </div>
+                    <CopyButton value={link} label={t('Copy')} className="shrink-0" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="shrink-0 px-2"
+                      aria-label={t('Show QR')}
+                      onClick={() => onQr(link)}
+                    >
+                      <QrCode className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                )
+              })}
+            </div>
+          )}
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => onQr(sub)}>
               <QrCode className="h-3.5 w-3.5" /> {t('Show QR')}

@@ -158,6 +158,7 @@ const FA: Record<string, string> = {
     'اشتراک و حساب‌های پروکسی — همه‌چیز از دامنه‌ای که پنل روش اجراست سرو می‌شود.',
   Subscription: 'اشتراک',
   'Subscription link': 'لینک اشتراک',
+  'Config address (vless://)': 'آدرس کانفیگ (vless://)',
   'Show QR': 'نمایش QR',
   'Clash link': 'لینک Clash',
   'sing-box link': 'لینک sing-box',
