@@ -53,7 +53,7 @@ export async function GET(req: Request, { params }: Params) {
       'content-type': contentType,
       'cache-control': 'no-store',
       'profile-update-interval': '6',
-      'content-disposition': `attachment; filename="${client.name}"`,
+      'content-disposition': `attachment; filename="Odyssey-${client.name}"`,
     },
   })
 }

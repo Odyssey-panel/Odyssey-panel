@@ -69,7 +69,8 @@ export async function POST(req: Request) {
     const secret = isUuid ? crypto.randomUUID() : randomBytes(16).toString('base64url')
     const proxyLike = {
       protocol: body.protocol,
-      remark: name,
+      // every Odyssey config is named "Odyssey-<username>"
+      remark: `Odyssey-${name}`,
       address: body.address,
       port: Number(body.port),
       secret,

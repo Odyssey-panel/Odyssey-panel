@@ -4,18 +4,19 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Shield, Loader2, LockKeyhole } from 'lucide-react'
+import { Loader2, LockKeyhole } from 'lucide-react'
 import { toast } from 'sonner'
 import { api } from './api'
 import { useLang } from '@/lib/i18n'
 import { LanguageSwitcher } from './panel'
+import { OdysseyEmblem, OdysseyWordmark } from './odyssey-logo'
 
-function AuroraOrbs() {
+function SeaOrbs() {
   return (
     <div className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
-      <div className="animate-float absolute -top-32 -left-24 h-[26rem] w-[26rem] rounded-full bg-violet-600/25 blur-[110px] dark:bg-violet-600/30" />
-      <div className="animate-float-slow absolute top-1/3 -right-28 h-[24rem] w-[24rem] rounded-full bg-cyan-500/20 blur-[110px] dark:bg-cyan-500/25" />
-      <div className="animate-float absolute -bottom-32 left-1/3 h-[22rem] w-[22rem] rounded-full bg-indigo-500/20 blur-[110px] dark:bg-indigo-600/25" />
+      <div className="animate-float absolute -top-32 -left-24 h-[26rem] w-[26rem] rounded-full bg-odyssey-navy/25 blur-[110px] dark:bg-odyssey-cyan/14" />
+      <div className="animate-float-slow absolute top-1/3 -right-28 h-[24rem] w-[24rem] rounded-full bg-odyssey-cyan/25 blur-[110px] dark:bg-odyssey-cyan/16" />
+      <div className="animate-float absolute -bottom-32 left-1/3 h-[22rem] w-[22rem] rounded-full bg-sky-600/20 blur-[110px] dark:bg-odyssey-deep/60" />
     </div>
   )
 }
@@ -42,7 +43,7 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <div className="relative flex min-h-screen items-center justify-center p-4">
-      <AuroraOrbs />
+      <SeaOrbs />
 
       {/* Language switcher */}
       <div className="absolute top-4 end-4">
@@ -50,17 +51,17 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
       </div>
 
       <div className="animate-rise w-full max-w-sm">
-        {/* Brand row */}
-        <div className="mb-6 flex flex-col items-center text-center">
-          <div className="relative mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-[0_8px_40px_-8px_oklch(0.55_0.24_292/0.8)] ring-1 ring-inset ring-white/25">
-            <Shield className="h-8 w-8 text-white" strokeWidth={2.2} />
-            <span className="absolute -inset-px rounded-2xl bg-gradient-to-br from-white/30 to-transparent opacity-70" />
-          </div>
-          <h1 className="font-display text-[26px] font-semibold tracking-tight">
-            {t('Odyssey Panel')}
-          </h1>
-          <div className="mt-2 inline-flex items-center gap-1.5 rounded-full bg-emerald-500/12 px-3 py-1 text-[11px] font-semibold text-emerald-600 ring-1 ring-inset ring-emerald-500/30 dark:text-emerald-400">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+        {/* Brand hero — the Odyssey emblem over the wordmark */}
+        <div className="mb-7 flex flex-col items-center text-center">
+          <OdysseyEmblem animated className="h-24 w-24 drop-shadow-[0_10px_36px_oklch(0.6_0.09_214/0.4)]" />
+          <OdysseyWordmark size="lg" tagline={false} className="mt-4" />
+          {lang === 'fa' && (
+            <div className="mt-1.5 text-sm font-medium text-odyssey-deep/70 dark:text-odyssey-silver/80">
+              اودیسه
+            </div>
+          )}
+          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-odyssey-cyan/12 px-3 py-1 text-[11px] font-semibold text-odyssey-deep ring-1 ring-inset ring-odyssey-cyan/30 dark:text-odyssey-bright">
+            <span className="h-1.5 w-1.5 rounded-full bg-odyssey-cyan" />
             {t('Free forever')} · {t('self-hosted proxy & subscription panel')}
           </div>
           <p className="mt-2 text-sm text-muted-foreground">
@@ -69,7 +70,7 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
         </div>
 
         {/* Glass card */}
-        <form onSubmit={submit} className="glass rounded-2xl border bg-card p-6 shadow-[0_20px_70px_-20px_oklch(0.45_0.2_292/0.55)] dark:shadow-[0_24px_80px_-24px_oklch(0_0_0/0.85)]">
+        <form onSubmit={submit} className="glass rounded-2xl border bg-card p-6 shadow-[0_20px_70px_-20px_oklch(0.35_0.06_248/0.5)] dark:shadow-[0_24px_80px_-24px_oklch(0_0_0/0.85)]">
           <div className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="password">{t('Admin password')}</Label>

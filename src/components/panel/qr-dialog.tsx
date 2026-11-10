@@ -63,7 +63,7 @@ export function QrDialog({
               {fresh.error}
             </div>
           ) : fresh?.url ? (
-            <div className="rounded-2xl bg-gradient-to-br from-violet-500/20 to-cyan-500/20 p-2 ring-1 ring-inset ring-white/10">
+            <div className="rounded-2xl bg-gradient-to-br from-odyssey-navy/20 to-odyssey-cyan/20 p-2 ring-1 ring-inset ring-white/10">
               <img
                 src={fresh.url}
                 alt="QR code"

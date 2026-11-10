@@ -20,7 +20,6 @@ import {
   Radar,
   Settings as SettingsIcon,
   Menu,
-  Shield,
   LogOut,
   Moon,
   Sun,
@@ -29,6 +28,7 @@ import {
 } from 'lucide-react'
 import { api } from './api'
 import { useLang, type Lang } from '@/lib/i18n'
+import { OdysseyEmblem, OdysseyWordmark } from './odyssey-logo'
 import { DashboardView } from './views/dashboard'
 import { ClientsView } from './views/clients'
 import { NodesView } from './views/nodes'
@@ -65,22 +65,17 @@ function useIsMobile(): boolean {
 export function Logo({ compact = false }: { compact?: boolean }) {
   const { t } = useLang()
   return (
-    <div className="flex items-center gap-2.5">
-      <div className="relative flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-600 to-indigo-600 shadow-[0_4px_16px_-4px_oklch(0.55_0.24_292/0.7)] ring-1 ring-inset ring-white/20">
-        <Shield className="h-[18px] w-[18px] text-white" strokeWidth={2.2} />
-        <span className="absolute -inset-px rounded-xl bg-gradient-to-br from-white/25 to-transparent opacity-60" />
-      </div>
+    <div className="flex items-center gap-3">
+      <OdysseyEmblem animated className="h-10 w-10 shrink-0 drop-shadow-[0_3px_10px_oklch(0.6_0.09_214/0.35)]" />
       <div className="min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="font-display text-[15px] font-semibold leading-tight tracking-tight">
-            {t('Odyssey Panel')}
-          </span>
-          <span className="rounded-full bg-emerald-500/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-emerald-500 ring-1 ring-inset ring-emerald-500/30">
+        <div className="flex items-center gap-2">
+          <OdysseyWordmark size="sm" tagline={false} />
+          <span className="rounded-full bg-odyssey-cyan/15 px-1.5 py-px text-[9px] font-bold uppercase tracking-wide text-odyssey-cyan ring-1 ring-inset ring-odyssey-cyan/30 dark:text-odyssey-bright">
             {t('Free')}
           </span>
         </div>
         {!compact && (
-          <div className="text-[11px] leading-tight text-muted-foreground">
+          <div className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
             {t('Personal proxy control center')}
           </div>
         )}
@@ -218,7 +213,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
                     className={cn(
                       'relative flex h-8 w-12 items-center justify-center rounded-full transition-all duration-200',
                       active
-                        ? 'bg-gradient-to-r from-violet-600/25 to-indigo-600/25 text-violet-500 shadow-[inset_0_0_0_1px_oklch(0.68_0.21_293/0.3)] dark:text-violet-300'
+                        ? 'bg-gradient-to-r from-odyssey-cyan/20 to-odyssey-navy/10 text-odyssey-deep shadow-[inset_0_0_0_1px_oklch(0.72_0.1_214/0.35),0_4px_16px_-8px_oklch(0.55_0.09_220/0.5)] dark:text-odyssey-bright'
                         : 'text-muted-foreground/75 group-active:scale-95'
                     )}
                   >
@@ -264,18 +259,18 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
                   className={cn(
                     'group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     active
-                      ? 'bg-gradient-to-r from-violet-600/20 via-indigo-600/10 to-transparent text-foreground shadow-[inset_0_0_0_1px_oklch(0.68_0.21_293/0.28),0_4px_16px_-8px_oklch(0.62_0.22_293/0.5)]'
+                      ? 'bg-gradient-to-r from-odyssey-cyan/20 via-odyssey-navy/10 to-transparent text-foreground shadow-[inset_0_0_0_1px_oklch(0.72_0.1_214/0.32),0_4px_16px_-8px_oklch(0.55_0.09_220/0.5)]'
                       : 'text-muted-foreground hover:bg-white/[0.04] hover:text-foreground dark:hover:bg-white/[0.05]'
                   )}
                   aria-current={active ? 'page' : undefined}
                 >
                   {active && (
-                    <span className="absolute start-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-violet-400 to-cyan-400 shadow-[0_0_10px_oklch(0.62_0.22_293/0.9)]" />
+                    <span className="absolute start-0 top-1/2 h-5 w-[3px] -translate-y-1/2 rounded-full bg-gradient-to-b from-odyssey-cyan to-odyssey-silver shadow-[0_0_10px_oklch(0.72_0.1_214/0.8)]" />
                   )}
                   <item.icon
                     className={cn(
                       'h-4 w-4 transition-colors',
-                      active ? 'text-violet-400' : 'text-muted-foreground/80 group-hover:text-foreground'
+                      active ? 'text-odyssey-cyan dark:text-odyssey-bright' : 'text-muted-foreground/80 group-hover:text-foreground'
                     )}
                   />
                   {t(item.label)}
@@ -297,7 +292,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
               {t('Sign out')}
             </button>
             <div className="mt-2 flex items-center gap-2.5 rounded-lg border bg-white/[0.03] px-3 py-2.5">
-              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-cyan-500 text-[10px] font-bold text-white">
+              <div className="flex h-7 w-7 items-center justify-center rounded-full bg-gradient-to-br from-odyssey-navy to-odyssey-cyan text-[10px] font-bold text-white">
                 {t('Admin').slice(0, 2)}
               </div>
               <div className="min-w-0 flex-1 leading-tight">
@@ -320,7 +315,11 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
 
       <footer className="mt-auto border-t px-4 py-3">
         <div className="mx-auto flex max-w-6xl items-center justify-between text-xs text-muted-foreground/80">
-          <span>{t('Odyssey Panel')} · {t('Free forever')}</span>
+          <span className="flex items-center gap-2">
+            <OdysseyEmblem className="h-4 w-4" />
+            <span dir="ltr" className="font-display font-semibold uppercase tracking-[0.25em]">Odyssey</span>
+            <span>· {t('Free forever')}</span>
+          </span>
           <span className="hidden sm:inline">{t('Free · self-hosted · works on any domain')}</span>
         </div>
       </footer>

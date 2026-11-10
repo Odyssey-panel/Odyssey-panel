@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <style>
+    rect { fill: #0e1926; }
+    .a { stroke: #b9c4cc; }
+    .s, .w { stroke: #56c5de; }
+    .w2 { stroke: #b9c4cc; }
+    @media (prefers-color-scheme: light) {
+      rect { fill: #f6f8fa; }
+      .a, .s, .w, .w2 { stroke: #1b3a5c; }
+    }
+  </style>
+  <rect width="64" height="64" rx="14" />
+  <g fill="none" stroke-width="4" stroke-linecap="round" stroke-linejoin="round">
+    <path class="a" d="M 21.3 51.6 A 23 23 0 1 1 42.7 51.6" transform="translate(0 -1)"/>
+    <path class="s" d="M 35.5 12 C 34.2 19.5 31.3 28 28 35 L 45 35 C 41 28 37.8 19.5 35.5 12 Z"/>
+    <path class="w" d="M 8 43.5 C 13 38.5 19 38.5 24 42 C 29 45.5 35.5 46 40.5 43 C 44 40.9 47.5 40.5 50.5 42"/>
+    <path class="w2" d="M 32 42 C 32.8 44.8 36 45.8 38 43.8 C 39.6 42.2 38.4 39.9 36.4 40.3"/>
+  </g>
+</svg>

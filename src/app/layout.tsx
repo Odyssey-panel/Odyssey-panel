@@ -25,11 +25,11 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
-  title: "اودیسه پنل — Odyssey Panel",
+  title: "اودیسه — ODYSSEY",
   description:
-    "پنل مدیریت پروکسی و اشتراک، رایگان و سلف‌هاست: کاربران، محدودیت ترافیک، لینک اشتراک، QR، بررسی سلامت نودها و اسکنر پورت. / Free self-hosted proxy & subscription control panel.",
+    "اودیسه — مدیریت کاربران، ترافیک، لینک اشتراک و نودها؛ رایگان و سلف‌هاست. / ODYSSEY — free self-hosted proxy & subscription control panel. Secure · Private · Unlimited.",
   icons: {
-    icon: "https://z-cdn.chatglm.cn/z-ai/static/logo.svg",
+    icon: "/icon.svg",
   },
 };
 
@@ -37,8 +37,8 @@ export const viewport: Viewport = {
   width: "device-width",
   initialScale: 1,
   themeColor: [
-    { media: "(prefers-color-scheme: dark)", color: "#0e0d16" },
-    { media: "(prefers-color-scheme: light)", color: "#f7f6fb" },
+    { media: "(prefers-color-scheme: dark)", color: "#0c1218" },
+    { media: "(prefers-color-scheme: light)", color: "#f6f8fa" },
   ],
 };
 

@@ -130,8 +130,8 @@ export function ClientsView() {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <div className="mb-1.5 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_8px_oklch(0.62_0.22_293/0.9)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300/90">
+            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-odyssey-navy to-odyssey-cyan shadow-[0_0_8px_oklch(0.72_0.1_214/0.9)]" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-800 dark:text-odyssey-cyan/90">
               {t('Subscribers')}
             </span>
           </div>
@@ -335,6 +335,11 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
       toast.error(t('Name is required'))
       return
     }
+    // A user is valid with just a name. If “generate proxy account” is on but
+    // no server address was filled, silently create the user without an
+    // account instead of blocking the button (old behavior confused users).
+    const withProxy = withAccount && Boolean(address.trim())
+    const skippedProxy = withAccount && !address.trim()
     setBusy(true)
     try {
       await api('/api/admin/clients', {
@@ -344,17 +349,21 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
           trafficGb: Number(trafficGb) || 0,
           days: Number(days) || 0,
           note: note.trim() || undefined,
-          protocol: withAccount ? protocol : undefined,
-          address: withAccount ? address.trim() : undefined,
-          port: withAccount ? Number(port) : undefined,
-          sni: withAccount ? sni.trim() || undefined : undefined,
-          transport: withAccount ? transport : undefined,
-          path: withAccount ? path.trim() || undefined : undefined,
-          host: withAccount ? host.trim() || undefined : undefined,
-          tls: withAccount ? tls : undefined,
+          protocol: withProxy ? protocol : undefined,
+          address: withProxy ? address.trim() : undefined,
+          port: withProxy ? Number(port) : undefined,
+          sni: withProxy ? sni.trim() || undefined : undefined,
+          transport: withProxy ? transport : undefined,
+          path: withProxy ? path.trim() || undefined : undefined,
+          host: withProxy ? host.trim() || undefined : undefined,
+          tls: withProxy ? tls : undefined,
         }),
       })
-      toast.success(t('User created — subscription link ready'))
+      toast.success(
+        skippedProxy
+          ? t('User created — no server address given, so no proxy account was generated')
+          : t('User created — subscription link ready')
+      )
       setName(''); setNote(''); setAddress(''); setSni(''); setPort('443'); setPath('/')
       onDone()
     } catch (e) {
@@ -457,7 +466,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
-          <Button onClick={submit} disabled={busy || !name.trim() || (withAccount && !address.trim())}>
+          <Button onClick={submit} disabled={busy || !name.trim()}>
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
             {t('Create user')}
           </Button>

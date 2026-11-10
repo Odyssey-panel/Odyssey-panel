@@ -10,7 +10,9 @@ export type Lang = 'fa' | 'en'
  */
 const FA: Record<string, string> = {
   // ── Shell / navigation ───────────────────────────────────────────────
-  'Odyssey Panel': 'اودیسه پنل',
+  'Odyssey Panel': 'اودیسه',
+  'User created — no server address given, so no proxy account was generated':
+    'کاربر ساخته شد — چون آدرس سرور ندادی، کانفیگی ساخته نشد؛ بعداً از مدیریت کاربر اضافه کن',
   'Personal proxy control center': 'مرکز کنترل شخصی پروکسی',
   Free: 'رایگان',
   'Free forever': 'همیشه رایگان',

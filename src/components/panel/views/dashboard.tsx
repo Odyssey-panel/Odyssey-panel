@@ -31,21 +31,21 @@ type Stats = {
 }
 
 const TINTS = {
-  violet: {
-    tile: 'bg-violet-500/15 text-violet-400 ring-violet-400/25',
-    glow: 'group-hover:shadow-[0_12px_44px_-14px_oklch(0.62_0.22_293/0.55)] group-hover:ring-violet-400/30',
+  navy: {
+    tile: 'bg-odyssey-navy/15 text-odyssey-navy ring-odyssey-navy/25 dark:text-odyssey-bright',
+    glow: 'group-hover:shadow-[0_12px_44px_-14px_oklch(0.35_0.058_248/0.5)] group-hover:ring-odyssey-navy/30',
   },
   emerald: {
     tile: 'bg-emerald-500/15 text-emerald-400 ring-emerald-400/25',
     glow: 'group-hover:shadow-[0_12px_44px_-14px_oklch(0.72_0.17_160/0.45)] group-hover:ring-emerald-400/30',
   },
   cyan: {
-    tile: 'bg-cyan-500/15 text-cyan-400 ring-cyan-400/25',
-    glow: 'group-hover:shadow-[0_12px_44px_-14px_oklch(0.72_0.14_210/0.45)] group-hover:ring-cyan-400/30',
+    tile: 'bg-odyssey-cyan/15 text-cyan-600 ring-odyssey-cyan/30 dark:text-odyssey-bright',
+    glow: 'group-hover:shadow-[0_12px_44px_-14px_oklch(0.72_0.1_214/0.5)] group-hover:ring-odyssey-cyan/35',
   },
-  indigo: {
-    tile: 'bg-indigo-500/15 text-indigo-400 ring-indigo-400/25',
-    glow: 'group-hover:shadow-[0_12px_44px_-14px_oklch(0.6_0.2_280/0.5)] group-hover:ring-indigo-400/30',
+  silver: {
+    tile: 'bg-odyssey-silver/20 text-slate-600 ring-odyssey-silver/30 dark:text-odyssey-silver',
+    glow: 'group-hover:shadow-[0_12px_44px_-14px_oklch(0.6_0.02_240/0.45)] group-hover:ring-odyssey-silver/35',
   },
 } as const
 
@@ -85,7 +85,7 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void
       value: `${data.clients.active}/${data.clients.total}`,
       hint: `${data.clients.expired} ${t('expired')} · ${data.clients.disabled} ${t('disabled')}`,
       icon: Users,
-      tint: 'violet',
+      tint: 'navy',
       onClick: () => onNavigate('clients'),
     },
     {
@@ -109,7 +109,7 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void
       value: String(data.clients.proxies),
       hint: t('all proxy accounts'),
       icon: Boxes,
-      tint: 'indigo',
+      tint: 'silver',
       onClick: () => onNavigate('clients'),
     },
   ]
@@ -119,8 +119,8 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void
       <div className="animate-rise flex flex-wrap items-end justify-between gap-3">
         <div>
           <div className="mb-1.5 flex items-center gap-2">
-            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-violet-500 to-cyan-400 shadow-[0_0_8px_oklch(0.62_0.22_293/0.9)]" />
-            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-violet-600 dark:text-violet-300/90">
+            <span className="h-1.5 w-1.5 rounded-full bg-gradient-to-r from-odyssey-navy to-odyssey-cyan shadow-[0_0_8px_oklch(0.72_0.1_214/0.9)]" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.18em] text-sky-800 dark:text-odyssey-cyan/90">
               {t('Overview')}
             </span>
           </div>
@@ -182,8 +182,8 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void
         <Card className="animate-rise" style={{ animationDelay: '200ms' }}>
           <CardHeader className="pb-4">
             <CardTitle className="flex items-center gap-2 text-[15px]">
-              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-violet-500/15 ring-1 ring-inset ring-violet-400/25">
-                <Activity className="h-3.5 w-3.5 text-violet-400" />
+              <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-odyssey-navy/15 ring-1 ring-inset ring-odyssey-navy/25">
+                <Activity className="h-3.5 w-3.5 text-odyssey-navy dark:text-odyssey-bright" />
               </span>
               {t('Traffic allocation')}
             </CardTitle>
@@ -267,7 +267,7 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void
         </CardHeader>
         <CardContent className="grid gap-2.5 sm:grid-cols-3">
           {[
-            { label: t('New user'), desc: t('Subscribers, traffic limits, expiry and subscription links'), view: 'clients' as ViewKey, icon: Users, tint: 'violet' as const },
+            { label: t('New user'), desc: t('Subscribers, traffic limits, expiry and subscription links'), view: 'clients' as ViewKey, icon: Users, tint: 'navy' as const },
             { label: t('Check nodes'), desc: t('Backend servers and worker endpoints with simple TCP/TLS/HTTP health checks — auto-refreshed every 5 minutes'), view: 'nodes' as ViewKey, icon: Server, tint: 'emerald' as const },
             { label: t('Open scanner'), desc: t('Check IPs, ports, TLS/SNI and basic HTTP info. Tap any value to copy.'), view: 'scanner' as ViewKey, icon: Radar, tint: 'cyan' as const },
           ].map((a) => (
