@@ -4,6 +4,37 @@ set -e
 
 echo "[boot] DATABASE_URL=${DATABASE_URL:-<unset>}"
 
+# ── sanitize DATABASE_URL ────────────────────────────────────────────────────
+# This panel uses SQLite, so DATABASE_URL must be an absolute `file:` URL
+# (image default: file:/data/panel.db). A plain path like `data/` or `/data`
+# entered in the Railway Variables tab breaks Prisma with
+# "the URL must start with the protocol file" — recover automatically:
+# (ODYSSEY_DEFAULT_DB exists only as a test hook; production keeps /data/panel.db)
+DEFAULT_DB="${ODYSSEY_DEFAULT_DB:-file:/data/panel.db}"
+case "${DATABASE_URL:-}" in
+  file:/*)
+    p="${DATABASE_URL#file:}"
+    p="${p%/}"
+    if [ -d "$p" ]; then
+      echo "[boot] NOTE: DATABASE_URL points at a directory — using $p/panel.db"
+      DATABASE_URL="file:$p/panel.db"
+    fi
+    ;;
+  file:*)
+    echo "[boot] NOTE: DATABASE_URL is a relative path — using default $DEFAULT_DB"
+    DATABASE_URL="$DEFAULT_DB"
+    ;;
+  "")
+    echo "[boot] NOTE: DATABASE_URL is unset — using default $DEFAULT_DB"
+    DATABASE_URL="$DEFAULT_DB"
+    ;;
+  *)
+    echo "[boot] NOTE: DATABASE_URL must start with 'file:' (got '$DATABASE_URL') — using default $DEFAULT_DB"
+    DATABASE_URL="$DEFAULT_DB"
+    ;;
+esac
+export DATABASE_URL
+
 echo "[boot] applying database schema (prisma db push)…"
 prisma db push --schema prisma/schema.prisma --skip-generate || \
   echo "[boot] WARNING: db push failed — schema will be restored from the baked-in template"
