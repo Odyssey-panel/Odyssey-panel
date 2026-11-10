@@ -73,5 +73,27 @@ has "$OUT_C" "all panel tables present" "C: ensure-db did NOT touch healthy db"
 MARK2=$(cd $SIM/app && DATABASE_URL=file:$SIM/volC/panel.db node -e "const{PrismaClient}=require('@prisma/client');const p=new PrismaClient();p.setting.findUnique({where:{key:'user-data-marker'}}).then(async r=>{console.log(r?'marker-intact':'marker-LOST');await p.\$disconnect()})")
 chk "$MARK2" "marker-intact" "C: user data preserved"
 
+say "D. user mistake: DATABASE_URL set to a plain path in Variables tab (exact Railway incident)"
+mkdir -p $SIM/volD $SIM/volD2
+# D1: variable value like `data/` (no file: prefix) — must be auto-corrected
+( cd $SIM/app && exec env DATABASE_URL=data/ ODYSSEY_DEFAULT_DB=file:$SIM/volD/panel.db PORT=8087 PATH="$SIM/bin:$PATH" \
+  sh scripts/boot.sh > $SIM/bootD1.log 2>&1 ) &
+PID_D1=$!
+wait_up 8087; chk "$?" "0" "D1: server healthy with invalid DATABASE_URL=data/"
+login 8087 > $SIM/loginD1.json
+chk "$(cat $SIM/loginD1.json)" '{"ok":true}' "D1: login admin123 -> ok"
+has "$(cat $SIM/bootD1.log)" "must start with 'file:'" "D1: loud warning printed"
+kill $PID_D1 2>/dev/null; sleep 1
+# D2: file: URL pointing at a directory — must gain /panel.db
+( cd $SIM/app && exec env DATABASE_URL=file:$SIM/volD2 PORT=8088 PATH="$SIM/bin:$PATH" \
+  sh scripts/boot.sh > $SIM/bootD2.log 2>&1 ) &
+PID_D2=$!
+wait_up 8088; chk "$?" "0" "D2: server healthy with DATABASE_URL=file:<dir>"
+login 8088 > $SIM/loginD2.json
+chk "$(cat $SIM/loginD2.json)" '{"ok":true}' "D2: login admin123 -> ok"
+has "$(cat $SIM/bootD2.log)" "points at a directory" "D2: directory note printed"
+[ -f $SIM/volD2/panel.db ] && { echo "PASS: D2: db file created inside dir"; PASS=$((PASS+1)); } || { echo "FAIL: D2: no db file in dir"; FAIL=$((FAIL+1)); }
+kill $PID_D2 2>/dev/null; sleep 1
+
 say "RESULT: $PASS passed / $FAIL failed"
 [ "$FAIL" = "0" ]
