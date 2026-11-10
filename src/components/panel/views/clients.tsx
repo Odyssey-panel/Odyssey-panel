@@ -214,7 +214,7 @@ export function ClientsView() {
                           <Progress value={pct} aria-label="Traffic used" />
                         </div>
                       )}
-                      {links.length > 0 && (
+                      {links.length > 0 ? (
                         <div className="mt-2.5 flex items-center gap-1.5" dir="ltr">
                           <div className="min-w-0 flex-1 rounded-md border bg-muted/40 px-2.5 py-1.5">
                             <p className="truncate font-mono text-[11px] text-muted-foreground">{links[0]}</p>
@@ -238,6 +238,10 @@ export function ClientsView() {
                           >
                             <QrCode className="h-3.5 w-3.5" />
                           </Button>
+                        </div>
+                      ) : (
+                        <div className="mt-2.5 rounded-md border border-dashed px-2.5 py-1.5 text-[11px] text-muted-foreground">
+                          {t('No config yet — open Manage and add a proxy account to get its vless:// address')}
                         </div>
                       )}
                     </div>
@@ -647,7 +651,7 @@ function DetailDialog({
             <Link2 className="h-4 w-4 text-primary" /> {t('Subscription')}
           </div>
           <CopyField label={t('Subscription link')} value={sub} />
-          {client.proxies.length > 0 && (
+          {client.proxies.length > 0 ? (
             <div className="space-y-1.5" dir="ltr">
               <div className="text-xs font-medium text-muted-foreground" dir="rtl">
                 {t('Config address (vless://)')}
@@ -674,6 +678,10 @@ function DetailDialog({
                 )
               })}
             </div>
+          ) : (
+            <p className="rounded-md border border-dashed p-3 text-center text-xs text-muted-foreground">
+              {t('No config yet — add a proxy account (with a server address) and its vless:// address will appear here')}
+            </p>
           )}
           <div className="flex flex-wrap gap-2">
             <Button variant="outline" size="sm" onClick={() => onQr(sub)}>

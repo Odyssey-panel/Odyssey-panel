@@ -159,6 +159,10 @@ const FA: Record<string, string> = {
   Subscription: 'اشتراک',
   'Subscription link': 'لینک اشتراک',
   'Config address (vless://)': 'آدرس کانفیگ (vless://)',
+  'No config yet — open Manage and add a proxy account to get its vless:// address':
+    'هنوز کانفیگی ساخته نشده — از «مدیریت» یه حساب پروکسی با آدرس سرور اضافه کن تا آدرس vless:// اینجا نمایش داده بشه',
+  'No config yet — add a proxy account (with a server address) and its vless:// address will appear here':
+    'هنوز کانفیگی نیست — از دکمهٔ «افزودن حساب» با آدرس سرور بساز؛ آدرس vless:// بلافاصله همین‌جا میاد',
   'Show QR': 'نمایش QR',
   'Clash link': 'لینک Clash',
   'sing-box link': 'لینک sing-box',
