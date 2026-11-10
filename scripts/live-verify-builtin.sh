@@ -19,7 +19,7 @@ ok () { echo "PASS: $1"; pass=$((pass+1)); }
 no () { echo "FAIL: $1"; fail=$((fail+1)); }
 
 echo "--- login ---"
-code=$(curl -s -o /dev/null -w '%{http_code}' -c "$CJ" -X POST "$BASE/api/auth/login" -H 'Content-Type: application/json' -d '{"password":""$ADMIN_PW""}')
+code=$(curl -s -o /dev/null -w '%{http_code}' -c "$CJ" -X POST "$BASE/api/auth/login" -H 'Content-Type: application/json' -d "{\"password\":\"$ADMIN_PW\"}")
 echo "login: $code"
 [ "$code" = "200" ] && ok "login" || no "login"
 

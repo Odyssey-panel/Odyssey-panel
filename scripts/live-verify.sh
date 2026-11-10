@@ -2,6 +2,7 @@
 # Live deploy verification: wait for the new build, then e2e on production.
 set -u
 BASE="https://odyssey-panel-production.up.railway.app"
+ADMIN_PW="${ADMIN_PW:?set ADMIN_PW env var}"
 CJ=/tmp/live-cj.txt
 
 echo "--- waiting for new deploy (chunk marker: ضد فیلترینگ) ---"
@@ -20,7 +21,7 @@ done
 [ "$found" = "1" ] || { echo "FAIL: deploy marker not found in time"; exit 1; }
 
 echo "--- live login ---"
-code=$(curl -s -o /dev/null -w '%{http_code}' -c "$CJ" -X POST "$BASE/api/auth/login" -H 'Content-Type: application/json' -d '{"password":"admin123"}')
+code=$(curl -s -o /dev/null -w '%{http_code}' -c "$CJ" -X POST "$BASE/api/auth/login" -H 'Content-Type: application/json' -d "{\"password\":\"$ADMIN_PW\"}")
 echo "login: $code"
 [ "$code" = "200" ] || { echo "FAIL: live login"; exit 1; }
 
