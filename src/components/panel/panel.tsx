@@ -42,14 +42,16 @@ export type ViewKey = 'dashboard' | 'clients' | 'antifilter' | 'nodes' | 'scanne
 export const NAV_ITEMS: {
   key: ViewKey
   label: string
+  /** compact label for the mobile bottom bar */
+  shortLabel?: string
   icon: React.ComponentType<{ className?: string }>
 }[] = [
-  { key: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { key: 'clients', label: 'Users', icon: Users },
-  { key: 'antifilter', label: 'Anti-filter', icon: Shield },
-  { key: 'nodes', label: 'Nodes & Workers', icon: Server },
-  { key: 'scanner', label: 'Scanner', icon: Radar },
-  { key: 'settings', label: 'Settings', icon: SettingsIcon },
+  { key: 'dashboard', label: 'Dashboard', shortLabel: 'Home', icon: LayoutDashboard },
+  { key: 'clients', label: 'Users', shortLabel: 'Users', icon: Users },
+  { key: 'antifilter', label: 'Anti-filter', shortLabel: 'Anti-filter (short)', icon: Shield },
+  { key: 'nodes', label: 'Nodes & Workers', shortLabel: 'Nodes', icon: Server },
+  { key: 'scanner', label: 'Scanner', shortLabel: 'Scanner', icon: Radar },
+  { key: 'settings', label: 'Settings', shortLabel: 'Settings', icon: SettingsIcon },
 ]
 
 /** True when the viewport is phone-sized (<768px). */
@@ -223,11 +225,11 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
                   </span>
                   <span
                     className={cn(
-                      'text-[10px] leading-none',
+                      'text-[10px] leading-none whitespace-nowrap',
                       active ? 'font-semibold text-foreground' : 'text-muted-foreground'
                     )}
                   >
-                    {t(item.label)}
+                    {t(item.shortLabel || item.label)}
                   </span>
                 </button>
               )

@@ -19,6 +19,10 @@ const FA: Record<string, string> = {
   'Nodes & Workers': 'نودها و ورکرها',
   Scanner: 'اسکنر',
   Settings: 'تنظیمات',
+  // short labels for the mobile bottom navigation
+  Home: 'خانه',
+  Nodes: 'نودها',
+  'Anti-filter (short)': 'ضد فیلتر',
   Menu: 'منو',
   Navigation: 'ناوبری',
   'Open menu': 'باز کردن منو',
@@ -356,6 +360,43 @@ const FA: Record<string, string> = {
   'cloudflare 443': 'کلادفلر ۴۴۳',
   'CF clean ports': 'پورت‌های تمیز CF',
   'Scan of {host}': 'اسکن {host}',
+
+  // ── Device self-test & ready sites (Scanner) ─────────────────────────
+  'Device test': 'تست دستگاه',
+  'Test failed': 'تست ناموفق بود',
+  'Heads-up: the built-in backend runs vless only. Other protocols need your own server at the address below — otherwise that config will not connect.':
+    'توجه: بک‌اند داخلی فقط vless را اجرا می‌کند. بقیه پروتکل‌ها به سرور خودت در آدرس زیر نیاز دارند — وگرنه آن کانفیگ وصل نمی‌شود.',
+  'Test from this device': 'تست از همین دستگاه',
+  'Paste the vless:// link and run a real tunnel handshake from your phone — no VPN app needed.':
+    'لینک vless:// را بچسبان و یک دست‌دهی تونل واقعی از گوشی خودت اجرا کن — بدون نیاز به اپ VPN.',
+  'Paste a valid vless:// link (tls + ws)': 'یک لینک vless:// معتبر بچسبان (tls + ws)',
+  'Run test': 'اجرای تست',
+  'Config works from this device 🎉': 'کانفیگ از این دستگاه کار می‌کند 🎉',
+  'Tunnel works': 'تونل کار می‌کند',
+  'Blocked on this network': 'روی این شبکه بسته است',
+  'Everything passed — if the VPN app still fails, update the app (v2rayNG ≥ 1.8.16) or re-import the config.':
+    'همه چیز پاس شد — اگر اپ VPN هنوز کار نکرد، اپ را آپدیت کن (v2rayNG حداقل ۱.۸.۱۶) یا کانفیگ را دوباره ایمپورت کن.',
+  'This domain is blocked on your current network. Try another network / ISP, or add a fragment preset (Anti-filter tab).':
+    'این دامنه روی شبکه فعلی تو بسته است. شبکه/اپراتور دیگر را امتحان کن یا از تب ضد فیلترینگ یک پریست فرگمنت اضافه کن.',
+  'The site opens but the tunnel path is blocked here. Switch network or use the fragment presets, then test again.':
+    'سایت باز می‌شود ولی مسیر تونل اینجا بسته است. شبکه را عوض کن یا از پریست‌های فرگمنت استفاده کن و دوباره تست بگیر.',
+  'Connection reached the server but the tunnel data did not return. Re-import the config into the VPN app and test again.':
+    'اتصال به سرور رسید ولی داده تونل برنگشت. کانفیگ را دوباره در اپ VPN ایمپورت کن و تست بگیر.',
+  'Ready scanner sites': 'سایت‌های آماده اسکنر',
+  'Trusted, ready-to-use tools for reachability, clean-IP hunting and routing info.':
+    'ابزارهای آماده و مطمئن برای بررسی در دسترس بودن، پیدا کردن IP تمیز و اطلاعات مسیریابی.',
+  'TCP/port reachability from many countries — the closest thing to testing from outside Iran':
+    'بررسی پورت/TCP از ده‌ها کشور — نزدیک‌ترین چیز به تست از خارج ایران',
+  'Ping, port and traceroute of any host from dozens of locations worldwide':
+    'پینگ، پورت و تریسرت هر هاست از ده‌ها نقطه دنیا',
+  'The famous Cloudflare clean-IP scanner — find fast IPs, then put the best one in the config address':
+    'اسکنر معروف IPهای تمیز کلادفلر — IPهای سریع را پیدا کن و بهترینش را در آدرس کانفیگ بگذار',
+  'Official Cloudflare IP ranges — feed them into the scanner as input':
+    'رنج‌های رسمی IP کلادفلر — به‌عنوان ورودی اسکنر استفاده کن',
+  'Official Cloudflare speed test — measure latency/throughput per region':
+    'تست سرعت رسمی کلادفلر — تأخیر و پهنای‌باند هر منطقه را بسنج',
+  'BGP/ASN lookup — see who hosts an IP and how it routes':
+    'استعلام BGP/ASN — ببین هر IP کجا میزبانی می‌شود و از چه مسیری می‌رود',
 
   // ── Settings ─────────────────────────────────────────────────────────
   Configuration: 'پیکربندی',

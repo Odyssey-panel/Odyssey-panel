@@ -43,6 +43,7 @@ import { bytesToGb, daysLeft, formatBytes, formatDate, trafficState } from '@/li
 import { useLang } from '@/lib/i18n'
 import { toast } from 'sonner'
 import { buildShareLink, buildDeepLinks, buildTelegramTapLink } from '@/lib/links'
+import { runDeviceTest, type TunnelTestResult } from '@/lib/selftest'
 import { ISP_PRESETS } from '@/lib/isps'
 import {
   Plus,
@@ -62,6 +63,9 @@ import {
   Smartphone,
   Cloud,
   ShieldCheck,
+  Activity,
+  CheckCircle2,
+  XCircle,
 } from 'lucide-react'
 import { WORKER_STEPS_FA } from '@/lib/worker-kit'
 
@@ -1018,6 +1022,9 @@ function DetailDialog({
                             </Button>
                           </a>
                         )}
+                        {p.protocol === 'vless' && p.tls && (p.transport || 'ws') === 'ws' && (
+                          <ProxyTestButton proxy={p} />
+                        )}
                         <CopyButton value={link} label={t('Link')} />
                         <CopyButton value={p.secret} label={t('Secret')} />
                         {p.serverConfig && (
@@ -1037,7 +1044,7 @@ function DetailDialog({
                         </Button>
                       </div>
                     </div>
-                    <div className="rounded-md bg-muted/40 p-2 font-mono text-[11px] break-all text-muted-foreground" dir="ltr">{link}</div>
+                    <div className="max-h-24 overflow-y-auto rounded-md bg-muted/40 p-2 font-mono text-[11px] leading-relaxed break-all text-muted-foreground" dir="ltr">{link}</div>
                   </div>
                 )
               })}
@@ -1195,6 +1202,11 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
                 <Input value={remark} onChange={(e) => setRemark(e.target.value)} />
               </div>
             </div>
+            {protocol !== 'vless' && (
+              <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
+                {t('Heads-up: the built-in backend runs vless only. Other protocols need your own server at the address below — otherwise that config will not connect.')}
+              </p>
+            )}
 
             {/* Operator quick-fill presets (anti-filter) */}
             {showFragment && (
@@ -1317,3 +1329,57 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
 }
 
 // client-side link building now uses the shared isomorphic builder in @/lib/links
+
+// ── per-proxy device tunnel test ─────────────────────────────────────────────
+
+function ProxyTestButton({ proxy }: { proxy: ProxyRow }) {
+  const { t } = useLang()
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<TunnelTestResult | null>(null)
+
+  const run = async () => {
+    setBusy(true)
+    setResult(null)
+    try {
+      const r = await runDeviceTest({
+        address: proxy.address.trim(),
+        port: Number(proxy.port) || 443,
+        path: proxy.path || '/',
+        sni: proxy.sni,
+        uuid: proxy.secret,
+      })
+      setResult(r)
+    } catch {
+      setResult(null)
+      toast.error(t('Test failed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <div className="inline-flex items-center gap-1.5">
+      <Button variant="outline" size="sm" className="h-8" onClick={() => void run()} disabled={busy}>
+        {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Activity className="h-3.5 w-3.5" />}
+        {t('Device test')}
+      </Button>
+      {result && (
+        <span className="inline-flex items-center gap-1" title={result.ok ? t('Tunnel works') : t('Blocked on this network')}>
+          {result.ok ? (
+            <>
+              <CheckCircle2 className="h-4 w-4 text-emerald-500" />
+              <span className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">
+                {result.steps[2]?.latencyMs ? `${result.steps[2].latencyMs} ms` : t('Tunnel works')}
+              </span>
+            </>
+          ) : (
+            <>
+              <XCircle className="h-4 w-4 text-red-500" />
+              <span className="text-[11px] font-medium text-red-600 dark:text-red-400">{t('Blocked on this network')}</span>
+            </>
+          )}
+        </span>
+      )}
+    </div>
+  )
+}

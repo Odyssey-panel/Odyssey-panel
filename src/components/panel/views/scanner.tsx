@@ -7,13 +7,15 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Skeleton } from '@/components/ui/skeleton'
 import { Separator } from '@/components/ui/separator'
+import { Badge } from '@/components/ui/badge'
 import { CopyButton, CopyField } from '../copy'
 import { StatusBadge } from '../status-badge'
 import { api } from '../api'
 import { formatDateTime } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
+import { parseVlessUri, runDeviceTest, type TunnelTestResult } from '@/lib/selftest'
 import { toast } from 'sonner'
-import { Radar, Loader2, FileJson, TextQuote } from 'lucide-react'
+import { Radar, Loader2, FileJson, TextQuote, Globe, Smartphone, ExternalLink, Activity, CheckCircle2, XCircle } from 'lucide-react'
 
 type ScanResult = {
   port: number
@@ -101,6 +103,12 @@ export function ScannerView() {
           {t('Check IPs, ports, TLS/SNI and basic HTTP info. Tap any value to copy.')}
         </p>
       </div>
+
+      {/* ── device self-test: proves the config works from THIS device ── */}
+      <DeviceTestCard />
+
+      {/* ── ready-made scanner sites & tools ── */}
+      <ReadySitesCard />
 
       <Card>
         <CardHeader className="pb-3">
@@ -288,6 +296,173 @@ function PortCard({ item, host }: { item: ScanResult; host: string }) {
           )}
         </CardContent>
       )}
+    </Card>
+  )
+}
+
+// ── device self-test ─────────────────────────────────────────────────────────
+
+
+function DeviceTestCard() {
+  const { t } = useLang()
+  const [uri, setUri] = useState('')
+  const [busy, setBusy] = useState(false)
+  const [result, setResult] = useState<TunnelTestResult | null>(null)
+
+  const run = async () => {
+    const target = parseVlessUri(uri)
+    if (!target) {
+      toast.error(t('Paste a valid vless:// link (tls + ws)'))
+      return
+    }
+    setBusy(true)
+    setResult(null)
+    try {
+      const r = await runDeviceTest(target)
+      setResult(r)
+      if (r.ok) toast.success(t('Config works from this device 🎉'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  const advice = (verdict: string): string => {
+    if (verdict === 'ok') return t('Everything passed — if the VPN app still fails, update the app (v2rayNG ≥ 1.8.16) or re-import the config.')
+    if (verdict === 'https-blocked') return t('This domain is blocked on your current network. Try another network / ISP, or add a fragment preset (Anti-filter tab).')
+    if (verdict === 'ws-blocked') return t('The site opens but the tunnel path is blocked here. Switch network or use the fragment presets, then test again.')
+    return t('Connection reached the server but the tunnel data did not return. Re-import the config into the VPN app and test again.')
+  }
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Smartphone className="h-4 w-4 text-primary" /> {t('Test from this device')}
+        </CardTitle>
+        <CardDescription>
+          {t('Paste the vless:// link and run a real tunnel handshake from your phone — no VPN app needed.')}
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="flex flex-col gap-2 sm:flex-row">
+          <Input
+            value={uri}
+            onChange={(e) => setUri(e.target.value)}
+            placeholder="vless://…"
+            dir="ltr"
+            className="font-mono text-xs"
+            onKeyDown={(e) => e.key === 'Enter' && void run()}
+          />
+          <Button onClick={() => void run()} disabled={busy || !uri.trim()} className="shrink-0">
+            {busy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}
+            {t('Run test')}
+          </Button>
+        </div>
+
+        {result && (
+          <div className="space-y-2 rounded-lg border p-3">
+            <div className="flex items-center gap-2">
+              {result.ok ? (
+                <CheckCircle2 className="h-5 w-5 text-emerald-500" />
+              ) : (
+                <XCircle className="h-5 w-5 text-red-500" />
+              )}
+              <StatusBadge
+                kind={result.ok ? 'green' : 'red'}
+                label={result.ok ? t('Tunnel works') : t('Blocked on this network')}
+              />
+              {result.ok && result.steps[2]?.latencyMs !== undefined && (
+                <span className="text-xs text-muted-foreground">⚡ {result.steps[2].latencyMs} ms</span>
+              )}
+            </div>
+            <div className="grid gap-1.5 sm:grid-cols-3">
+              {result.steps.map((s) => (
+                <div key={s.id} className="flex items-center justify-between rounded-md border bg-muted/30 px-2.5 py-1.5 text-xs">
+                  <span className="font-mono">{s.label}</span>
+                  <span className="flex items-center gap-1.5">
+                    {s.latencyMs !== undefined && s.state === 'ok' && (
+                      <span className="text-muted-foreground">{s.latencyMs} ms</span>
+                    )}
+                    {s.state === 'ok' ? (
+                      <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />
+                    ) : (
+                      <XCircle className="h-3.5 w-3.5 text-red-500" />
+                    )}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <p className="text-xs leading-relaxed text-muted-foreground">{advice(result.verdict)}</p>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  )
+}
+
+// ── ready-made scanner sites ─────────────────────────────────────────────────
+
+function ReadySitesCard() {
+  const { t } = useLang()
+  const sites = [
+    {
+      name: 'check-host.net',
+      url: 'https://check-host.net/check-tcp',
+      desc: t('TCP/port reachability from many countries — the closest thing to testing from outside Iran'),
+    },
+    {
+      name: 'ping.pe',
+      url: 'https://ping.pe',
+      desc: t('Ping, port and traceroute of any host from dozens of locations worldwide'),
+    },
+    {
+      name: 'CloudflareSpeedTest',
+      url: 'https://github.com/XIU2/CloudflareSpeedTest',
+      desc: t('The famous Cloudflare clean-IP scanner — find fast IPs, then put the best one in the config address'),
+    },
+    {
+      name: 'Cloudflare IP ranges',
+      url: 'https://www.cloudflare.com/ips/',
+      desc: t('Official Cloudflare IP ranges — feed them into the scanner as input'),
+    },
+    {
+      name: 'speed.cloudflare.com',
+      url: 'https://speed.cloudflare.com/',
+      desc: t('Official Cloudflare speed test — measure latency/throughput per region'),
+    },
+    {
+      name: 'bgp.he.net',
+      url: 'https://bgp.he.net/',
+      desc: t('BGP/ASN lookup — see who hosts an IP and how it routes'),
+    },
+  ]
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <CardTitle className="flex items-center gap-2 text-base">
+          <Globe className="h-4 w-4 text-primary" /> {t('Ready scanner sites')}
+        </CardTitle>
+        <CardDescription>{t('Trusted, ready-to-use tools for reachability, clean-IP hunting and routing info.')}</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <div className="grid gap-2 sm:grid-cols-2">
+          {sites.map((s) => (
+            <a
+              key={s.url}
+              href={s.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group flex items-start gap-2.5 rounded-lg border p-3 transition-colors hover:border-primary/40 hover:bg-muted/40"
+            >
+              <ExternalLink className="mt-0.5 h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-primary" />
+              <div className="min-w-0">
+                <div className="font-mono text-sm font-semibold" dir="ltr">{s.name}</div>
+                <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">{s.desc}</p>
+              </div>
+            </a>
+          ))}
+        </div>
+      </CardContent>
     </Card>
   )
 }
