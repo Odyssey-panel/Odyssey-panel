@@ -76,3 +76,4 @@ tool-results
 /upload/
 # local test copies — the Dockerfile downloads xray at build time
 /bin/
+.railway/

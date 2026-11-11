@@ -1,6 +1,26 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 
+/* ---- Self-hosted fonts (zero external requests) ----
+   Replaces next/font/google: unbreaks the Turbopack 16.1.x Docker build
+   ("next/font/google queries have exactly one entry") and removes any
+   build/runtime dependency on Google Fonts. Fonts live in /public/fonts. */
+@font-face{font-family:'Vazirmatn';src:url('/fonts/vazirmatn-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:'Vazirmatn';src:url('/fonts/vazirmatn-500.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap;}
+@font-face{font-family:'Vazirmatn';src:url('/fonts/vazirmatn-600.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;}
+@font-face{font-family:'Vazirmatn';src:url('/fonts/vazirmatn-700.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap;}
+@font-face{font-family:'Vazirmatn';src:url('/fonts/vazirmatn-800.woff2') format('woff2');font-weight:800;font-style:normal;font-display:swap;}
+@font-face{font-family:'Geist';src:url('/fonts/geist-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:'Geist';src:url('/fonts/geist-500.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap;}
+@font-face{font-family:'Geist';src:url('/fonts/geist-600.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;}
+@font-face{font-family:'Geist';src:url('/fonts/geist-700.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap;}
+@font-face{font-family:'Geist Mono';src:url('/fonts/geist-mono-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:'Geist Mono';src:url('/fonts/geist-mono-600.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;}
+@font-face{font-family:'Outfit';src:url('/fonts/outfit-400.woff2') format('woff2');font-weight:400;font-style:normal;font-display:swap;}
+@font-face{font-family:'Outfit';src:url('/fonts/outfit-500.woff2') format('woff2');font-weight:500;font-style:normal;font-display:swap;}
+@font-face{font-family:'Outfit';src:url('/fonts/outfit-600.woff2') format('woff2');font-weight:600;font-style:normal;font-display:swap;}
+@font-face{font-family:'Outfit';src:url('/fonts/outfit-700.woff2') format('woff2');font-weight:700;font-style:normal;font-display:swap;}
+
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
@@ -53,6 +73,11 @@
 
 :root {
   --radius: 0.75rem;
+  /* Self-hosted font families (replaces the next/font variables) */
+  --font-geist-sans: 'Geist';
+  --font-geist-mono: 'Geist Mono';
+  --font-outfit: 'Outfit';
+  --font-vazir: 'Vazirmatn';
   /* Latin UI font stack (English mode) */
   --font-app: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
   --font-display-app: var(--font-outfit), var(--font-geist-sans), ui-sans-serif, sans-serif;
