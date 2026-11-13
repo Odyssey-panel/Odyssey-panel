@@ -26,6 +26,10 @@ async function schemaOk() {
       ...REQUIRED_TABLES
     )
     return rows.length === REQUIRED_TABLES.length
+  } catch {
+    // unreadable / corrupt file ("file is not a database", permission errors, …)
+    // counts as schema-not-ok so the restore path below can rebuild it
+    return false
   } finally {
     await probe.$disconnect().catch(() => {})
   }

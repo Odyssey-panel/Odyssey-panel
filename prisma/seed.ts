@@ -40,7 +40,7 @@ async function main() {
         protocol: 'vless',
         tls: true,
         sni: 'cloudflare-dns.com',
-        location: 'Anycast',
+        location: 'Singapore',
         note: 'Sample entry used to demo health checks — replace with your real server.',
       },
     })

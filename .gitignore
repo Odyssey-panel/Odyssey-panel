@@ -54,9 +54,12 @@ prompt
 local-*
 tool-results
 
-# local sqlite database
-/db/*.db
+# sqlite database — the panel db SHIPS with the repo (private repo doubles as
+# the deployable data seed: schema + branded defaults + admin credentials).
+# Only the transient sidecar files stay ignored.
 /db/*.db-journal
+/db/*.db-wal
+/db/*.db-shm
 /prisma/template.db
 /prisma/*.db-journal
 /prisma/*.db-wal

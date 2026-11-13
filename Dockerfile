@@ -44,6 +44,10 @@ COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/prisma ./prisma
+# repo-baked database seed: schema + branded defaults + admin credentials.
+# scripts/boot.sh copies it to /data/panel.db on first boot (empty data dir),
+# so a fresh deploy comes up working immediately.
+COPY --from=builder /app/db ./db
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY --from=builder /app/node_modules/@prisma ./node_modules/@prisma
 COPY --from=builder /app/scripts/boot.sh ./scripts/boot.sh

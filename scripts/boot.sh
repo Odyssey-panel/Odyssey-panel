@@ -35,6 +35,19 @@ case "${DATABASE_URL:-}" in
 esac
 export DATABASE_URL
 
+# ── first boot: seed the live database from the repo-baked copy ─────────────
+# db/custom.db ships inside the image (schema + branded defaults + the admin
+# password + a stable panelSecret). When the data directory is empty — fresh
+# deploy, or no volume attached yet — start from it so the panel works the
+# moment it deploys. An existing non-empty database is never overwritten.
+SEED_DB="db/custom.db"
+DB_PATH="${DATABASE_URL#file:}"
+if [ -s "$SEED_DB" ] && [ ! -s "$DB_PATH" ]; then
+  mkdir -p "$(dirname "$DB_PATH")"
+  cp "$SEED_DB" "$DB_PATH"
+  echo "[boot] first boot — live database seeded from the baked-in repo db"
+fi
+
 echo "[boot] applying database schema (prisma db push)…"
 prisma db push --schema prisma/schema.prisma --skip-generate || \
   echo "[boot] WARNING: db push failed — schema will be restored from the baked-in template"

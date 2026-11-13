@@ -343,6 +343,12 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
             <OdysseyEmblem className="h-4 w-4" />
             <span dir="ltr" className="font-display font-semibold uppercase tracking-[0.25em]">Odyssey</span>
             <span>· {t('Anti-censorship control plane')}</span>
+            <span
+              dir="ltr"
+              className="ms-1 rounded-full border border-border/70 bg-muted/40 px-2 py-0.5 font-mono text-[10px] leading-none tracking-[0.18em] text-muted-foreground"
+            >
+              V15.2
+            </span>
           </span>
           <span className="hidden sm:inline">{t('multi-protocol · anti-filter · self-hosted')}</span>
         </div>
