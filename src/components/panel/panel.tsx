@@ -189,7 +189,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
     return (
       <div className="flex min-h-screen flex-col">
         {/* Mobile top bar */}
-        <header className="glass sticky top-0 z-40 flex items-center justify-between gap-2 border-b bg-background/70 px-4 py-3">
+        <header className="glass sticky top-2 z-40 mx-3 flex items-center justify-between gap-2 rounded-[1.5rem] border px-4 py-3 shadow-[0_14px_40px_-24px_oklch(0_0_0/0.72)]">
           <Logo compact />
           <div className="flex items-center gap-1.5">
             <LanguageSwitcher />
@@ -225,7 +225,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
 
         {/* Mobile bottom navigation */}
         <nav
-          className="glass liquid-glass-nav fixed inset-x-2 bottom-0 z-40 rounded-t-[1.35rem] border pb-[max(env(safe-area-inset-bottom),0.55rem)] pt-2 backdrop-blur-2xl"
+          className="glass liquid-glass-nav fixed inset-x-2 bottom-2 z-40 rounded-[1.65rem] border px-1 pb-[max(env(safe-area-inset-bottom),0.55rem)] pt-2 backdrop-blur-2xl shadow-[0_18px_48px_-22px_oklch(0_0_0/0.82)]"
           aria-label="Mobile navigation"
         >
           <div className="mx-auto grid max-w-lg grid-cols-7">
@@ -242,7 +242,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
                     className={cn(
                       'relative flex h-8 w-12 items-center justify-center rounded-full transition-all duration-200',
                       active
-                        ? 'bg-gradient-to-r from-odyssey-cyan/20 to-odyssey-navy/10 text-odyssey-deep shadow-[inset_0_0_0_1px_oklch(0.72_0.1_214/0.35),0_4px_16px_-8px_oklch(0.55_0.09_220/0.5)] dark:text-odyssey-bright'
+                        ? 'bg-sky-400/20 text-sky-700 ring-1 ring-inset ring-sky-300/45 shadow-[0_4px_18px_-7px_oklch(0.68_0.13_220/0.55)] dark:bg-sky-300/20 dark:text-sky-200 dark:ring-sky-200/35'
                         : 'text-muted-foreground/75 group-active:scale-95'
                     )}
                   >
@@ -270,7 +270,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
     <div className="flex min-h-screen flex-col">
       <div className="flex flex-1">
         {/* Sidebar */}
-        <aside className="glass sticky top-0 hidden h-screen w-64 shrink-0 flex-col border-e bg-sidebar md:flex">
+        <aside className="glass sticky top-3 my-3 ms-3 hidden h-[calc(100vh-1.5rem)] w-64 shrink-0 flex-col rounded-[1.65rem] border bg-sidebar md:flex">
           <div className="px-5 pb-5 pt-6">
             <Logo />
           </div>
