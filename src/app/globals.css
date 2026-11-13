@@ -464,3 +464,225 @@ body {
 code {
   overflow-wrap: anywhere;
 }
+
+
+/* ── Odyssey V18: unified soft / frosted glass system ───────────────────── */
+:root {
+  --odyssey-glass-blur: 22px;
+  --odyssey-glass-radius: 1.35rem;
+  --odyssey-glass-fill: oklch(0.18 0.025 248 / 0.70);
+  --odyssey-glass-line: oklch(0.88 0.045 218 / 0.14);
+}
+.dark body {
+  background-color: oklch(0.145 0.022 248);
+}
+.glass,
+.liquid-glass-nav,
+[role="dialog"],
+[data-radix-popper-content-wrapper] [data-radix-menu-content],
+[data-slot="popover-content"],
+[data-slot="select-content"] {
+  background-color: var(--odyssey-glass-fill);
+  background-image: linear-gradient(145deg, oklch(1 0 0 / 0.075), oklch(1 0 0 / 0.018) 48%, oklch(0.72 0.1 214 / 0.035));
+  border: 1px solid var(--odyssey-glass-line);
+  box-shadow: 0 16px 44px -28px oklch(0 0 0 / 0.72), inset 0 1px 0 oklch(1 0 0 / 0.10);
+  -webkit-backdrop-filter: blur(var(--odyssey-glass-blur)) saturate(1.35);
+  backdrop-filter: blur(var(--odyssey-glass-blur)) saturate(1.35);
+}
+:root:not(.dark) .glass,
+:root:not(.dark) .liquid-glass-nav,
+:root:not(.dark) [role="dialog"],
+:root:not(.dark) [data-radix-popper-content-wrapper] [data-radix-menu-content],
+:root:not(.dark) [data-slot="popover-content"],
+:root:not(.dark) [data-slot="select-content"] {
+  --odyssey-glass-fill: oklch(0.98 0.008 230 / 0.76);
+  --odyssey-glass-line: oklch(0.42 0.045 245 / 0.12);
+  box-shadow: 0 16px 44px -28px oklch(0.25 0.04 245 / 0.28), inset 0 1px 0 oklch(1 0 0 / 0.82);
+}
+.glass-card,
+[data-slot="card"] {
+  border-color: color-mix(in oklab, var(--border) 65%, transparent);
+  box-shadow: 0 14px 42px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.075);
+}
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  background-color: color-mix(in oklab, var(--card) 74%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+:focus-visible {
+  outline: 2px solid oklch(0.76 0.12 215 / 0.82);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .liquid-glass-nav, [role="dialog"],
+  [data-radix-popper-content-wrapper] [data-radix-menu-content],
+  [data-slot="popover-content"], [data-slot="select-content"] {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: var(--card);
+  }
+}
+
+
+/* ── V19: actually apply the bundled Persian font globally ─────────────── */
+html[lang="fa"] body,
+html[lang="fa"] button,
+html[lang="fa"] input,
+html[lang="fa"] textarea,
+html[lang="fa"] select,
+html[lang="fa"] [role="button"],
+html[lang="fa"] [role="menu"],
+html[lang="fa"] [role="dialog"] {
+  font-family: 'Vazirmatn', var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif !important;
+  font-feature-settings: "ss01" 1, "ss02" 1;
+}
+html[lang="en"] body,
+html[lang="en"] button,
+html[lang="en"] input,
+html[lang="en"] textarea,
+html[lang="en"] select {
+  font-family: 'Geist', ui-sans-serif, system-ui, sans-serif;
+}
+body { font-family: var(--font-app), ui-sans-serif, system-ui, sans-serif; }
+
+/* ── Theme-aware glass: the mobile dock must never stay black in light mode */
+.liquid-glass-nav {
+  background-color: oklch(0.97 0.012 230 / 0.78) !important;
+  background-image: linear-gradient(145deg, oklch(1 0 0 / 0.78), oklch(0.94 0.02 225 / 0.52) 55%, oklch(0.78 0.08 215 / 0.12)) !important;
+  border-color: oklch(0.42 0.045 245 / 0.16) !important;
+  box-shadow: 0 14px 44px -24px oklch(0.28 0.05 245 / 0.24), inset 0 1px 0 oklch(1 0 0 / 0.95) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(1.55);
+  backdrop-filter: blur(28px) saturate(1.55);
+}
+.dark .liquid-glass-nav {
+  background-color: oklch(0.15 0.025 248 / 0.78) !important;
+  background-image: linear-gradient(145deg, oklch(0.34 0.04 240 / 0.55), oklch(0.16 0.025 248 / 0.78) 58%, oklch(0.3 0.07 215 / 0.22)) !important;
+  border-color: oklch(0.86 0.05 215 / 0.2) !important;
+  box-shadow: 0 14px 44px -24px oklch(0 0 0 / 0.65), inset 0 1px 0 oklch(1 0 0 / 0.18) !important;
+}
+.dark .odyssey-mobile-header {
+  background-color: oklch(0.15 0.025 248 / 0.76);
+}
+.odyssey-mobile-header {
+  border-radius: 1.65rem !important;
+  border: 1px solid color-mix(in oklab, var(--border) 75%, transparent) !important;
+  background-color: oklch(0.985 0.01 230 / 0.78);
+  background-image: linear-gradient(145deg, oklch(1 0 0 / 0.84), oklch(0.94 0.02 225 / 0.52) 58%, oklch(0.78 0.08 215 / 0.10));
+  box-shadow: 0 14px 38px -24px oklch(0.28 0.05 245 / 0.28), inset 0 1px 0 oklch(1 0 0 / 0.9);
+  -webkit-backdrop-filter: blur(26px) saturate(1.55);
+  backdrop-filter: blur(26px) saturate(1.55);
+}
+.dark .odyssey-mobile-header {
+  background-image: linear-gradient(145deg, oklch(0.34 0.04 240 / 0.52), oklch(0.16 0.025 248 / 0.76) 58%, oklch(0.3 0.07 215 / 0.2));
+  box-shadow: 0 14px 38px -24px oklch(0 0 0 / 0.72), inset 0 1px 0 oklch(1 0 0 / 0.12);
+}
+
+/* Light theme gets its own luminous, readable glass surfaces */
+:root:not(.dark) .glass {
+  background-color: oklch(0.985 0.008 230 / 0.78);
+  background-image: linear-gradient(145deg, oklch(1 0 0 / 0.88), oklch(0.94 0.018 225 / 0.56) 55%, oklch(0.8 0.06 215 / 0.09));
+  border-color: oklch(0.42 0.045 245 / 0.13);
+  box-shadow: 0 16px 42px -28px oklch(0.28 0.05 245 / 0.22), inset 0 1px 0 oklch(1 0 0 / 0.9);
+}
+:root:not(.dark) [data-slot="card"],
+:root:not(.dark) .glass-card {
+  background-color: oklch(0.99 0.006 230 / 0.82);
+  border-color: oklch(0.42 0.045 245 / 0.12);
+  box-shadow: 0 14px 38px -28px oklch(0.28 0.05 245 / 0.20), inset 0 1px 0 oklch(1 0 0 / 0.95);
+}
+:root:not(.dark) [role="dialog"],
+:root:not(.dark) [data-radix-popper-content-wrapper] [data-radix-menu-content],
+:root:not(.dark) [data-slot="popover-content"],
+:root:not(.dark) [data-slot="select-content"] {
+  color: var(--foreground);
+  background-color: oklch(0.99 0.006 230 / 0.94);
+  background-image: linear-gradient(145deg, oklch(1 0 0 / 0.95), oklch(0.94 0.018 225 / 0.78));
+  border-color: oklch(0.42 0.045 245 / 0.15);
+  box-shadow: 0 18px 48px -28px oklch(0.28 0.05 245 / 0.25), inset 0 1px 0 white;
+}
+:root:not(.dark) input:not([type="checkbox"]):not([type="radio"]),
+:root:not(.dark) textarea,
+:root:not(.dark) select {
+  color: var(--foreground);
+  background-color: oklch(1 0 0 / 0.72);
+  border-color: oklch(0.42 0.045 245 / 0.18);
+}
+:root:not(.dark) .liquid-glass-nav button:not([aria-current="page"]) {
+  color: oklch(0.42 0.04 245);
+}
+
+/* ── Motion system: tactile press, hover, state and view transitions ───── */
+[data-slot="button"], button, [role="button"], a,
+input, textarea, select, [role="menuitem"], [role="tab"] {
+  transition:
+    transform 180ms cubic-bezier(.2,.8,.2,1),
+    box-shadow 220ms ease,
+    background-color 220ms ease,
+    border-color 220ms ease,
+    color 180ms ease,
+    opacity 180ms ease,
+    filter 180ms ease;
+  -webkit-tap-highlight-color: transparent;
+}
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="button"]:not(:disabled):hover,
+  button:not(:disabled):hover,
+  [role="button"]:hover,
+  [role="menuitem"]:hover,
+  [role="tab"]:hover {
+    filter: brightness(1.045);
+  }
+}
+[data-slot="button"]:not(:disabled):active,
+button:not(:disabled):active,
+[role="button"]:active,
+a:active,
+[role="menuitem"]:active,
+[role="tab"]:active {
+  transform: scale(.965);
+  filter: brightness(.97);
+}
+input:focus, textarea:focus, select:focus {
+  transform: translateY(-1px);
+}
+[data-state="open"][data-slot="dropdown-menu-trigger"],
+[data-state="open"][data-slot="popover-trigger"],
+[data-state="open"][data-slot="select-trigger"] {
+  box-shadow: 0 0 0 3px oklch(0.72 0.1 214 / .15);
+}
+[data-radix-popper-content-wrapper] [data-state="open"],
+[role="dialog"][data-state="open"] {
+  animation: odyssey-surface-in 220ms cubic-bezier(.2,.8,.2,1) both;
+}
+[data-radix-popper-content-wrapper] [data-state="closed"],
+[role="dialog"][data-state="closed"] {
+  animation: odyssey-surface-out 150ms ease both;
+}
+.odyssey-view-enter {
+  animation: odyssey-view-in 360ms cubic-bezier(.2,.8,.2,1) both;
+}
+@keyframes odyssey-view-in {
+  from { opacity: 0; transform: translateY(9px) scale(.995); filter: blur(3px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@keyframes odyssey-surface-in {
+  from { opacity: 0; transform: translateY(7px) scale(.975); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes odyssey-surface-out {
+  from { opacity: 1; transform: translateY(0) scale(1); }
+  to { opacity: 0; transform: translateY(4px) scale(.985); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    scroll-behavior: auto !important;
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
