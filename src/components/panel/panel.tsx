@@ -29,7 +29,7 @@ import {
 } from 'lucide-react'
 import { api } from './api'
 import { useLang, type Lang } from '@/lib/i18n'
-import { OdysseyLogoImage } from './odyssey-logo'
+import { OdysseyEmblem, OdysseyLogoImage } from './odyssey-logo'
 import { DashboardView } from './views/dashboard'
 import { ClientsView } from './views/clients'
 import { NodesView } from './views/nodes'
