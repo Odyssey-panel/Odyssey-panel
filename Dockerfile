@@ -51,6 +51,7 @@ COPY --from=builder /app/scripts/ensure-db.mjs ./scripts/ensure-db.mjs
 COPY --from=builder /app/scripts/edge.js ./scripts/edge.js
 COPY --from=builder /app/scripts/xray-sync.mjs ./scripts/xray-sync.mjs
 COPY --from=builder /app/scripts/migrate-addresses.mjs ./scripts/migrate-addresses.mjs
+COPY --from=builder /app/scripts/migrate-remarks.mjs ./scripts/migrate-remarks.mjs
 # full prisma CLI (complete dependency tree incl. 'effect' etc.) so that
 # `prisma db push` genuinely works at runtime for future schema upgrades
 RUN npm install -g --no-audit --no-fund prisma@6.19.2

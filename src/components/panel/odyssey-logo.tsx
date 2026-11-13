@@ -37,6 +37,21 @@ export function OdysseyEmblem({ className, animated = false }: { className?: str
   )
 }
 
+/**
+ * The real Odyssey logo images (the sheets the admin supplied) — one for light
+ * mode, one for dark mode. Always shown as-is, never redrawn.
+ */
+export function OdysseyLogoImage({ className = '', alt = 'Odyssey' }: { className?: string; alt?: string }) {
+  return (
+    <span className={`relative block overflow-hidden rounded-2xl ${className}`}>
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-light.jpg" alt={alt} className="h-full w-full object-cover dark:hidden" />
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img src="/logo-dark.jpg" alt="" aria-hidden="true" className="absolute inset-0 hidden h-full w-full object-cover dark:block" />
+    </span>
+  )
+}
+
 /** The ODYSSEY wordmark + SECURE | PRIVATE | UNLIMITED tagline. */
 export function OdysseyWordmark({
   size = 'md',

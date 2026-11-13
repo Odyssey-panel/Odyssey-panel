@@ -29,7 +29,7 @@ import {
 } from 'lucide-react'
 import { api } from './api'
 import { useLang, type Lang } from '@/lib/i18n'
-import { OdysseyEmblem, OdysseyWordmark } from './odyssey-logo'
+import { OdysseyLogoImage } from './odyssey-logo'
 import { DashboardView } from './views/dashboard'
 import { ClientsView } from './views/clients'
 import { NodesView } from './views/nodes'
@@ -71,17 +71,12 @@ export function Logo({ compact = false }: { compact?: boolean }) {
   const { t } = useLang()
   return (
     <div className="flex items-center gap-3">
-      <OdysseyEmblem animated className="h-10 w-10 shrink-0 drop-shadow-[0_3px_10px_oklch(0.6_0.09_214/0.35)]" />
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <OdysseyWordmark size="sm" tagline={false} />
+      <OdysseyLogoImage className="h-11 w-11 shrink-0" />
+      {!compact && (
+        <div className="min-w-0 text-[11px] leading-tight text-muted-foreground">
+          {t('Personal proxy control center')}
         </div>
-        {!compact && (
-          <div className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
-            {t('Personal proxy control center')}
-          </div>
-        )}
-      </div>
+      )}
     </div>
   )
 }

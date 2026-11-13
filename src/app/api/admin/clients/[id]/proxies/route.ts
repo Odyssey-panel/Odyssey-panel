@@ -58,10 +58,17 @@ export async function POST(req: Request, { params }: Params) {
   }
 
   const secret = generateSecret(protocol)
+  // MANDATORY branding: every Odyssey config starts with "Odyssey-".
+  // A typed remark gets the prefix automatically; empty falls back to the
+  // client's name. (The UI also defaults the field to "Odyssey-<name>".)
+  const rawRemark = body.remark?.trim() || ''
   const proxyLike = {
     protocol,
-    // every Odyssey config is named "Odyssey-<username>" (unless overridden)
-    remark: body.remark?.trim() || `Odyssey-${client.name}`,
+    remark: rawRemark
+      ? rawRemark.startsWith('Odyssey-')
+        ? rawRemark
+        : `Odyssey-${rawRemark}`
+      : `Odyssey-${client.name}`,
     address: norm.address,
     port: finalPort,
     secret,

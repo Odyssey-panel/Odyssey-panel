@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { api, ApiError } from './api'
 import { useLang } from '@/lib/i18n'
 import { LanguageSwitcher } from './panel'
-import { OdysseyEmblem, OdysseyWordmark } from './odyssey-logo'
+import { OdysseyLogoImage } from './odyssey-logo'
 
 function SeaOrbs() {
   return (
@@ -25,7 +25,7 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState('')
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
-  const { t, lang } = useLang()
+  const { t } = useLang()
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -57,15 +57,9 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
       </div>
 
       <div className="animate-rise w-full max-w-sm">
-        {/* Brand hero — the Odyssey emblem over the wordmark */}
+        {/* Brand hero — the real logo image the admin supplied */}
         <div className="mb-7 flex flex-col items-center text-center">
-          <OdysseyEmblem animated className="h-24 w-24 drop-shadow-[0_10px_36px_oklch(0.6_0.09_214/0.4)]" />
-          <OdysseyWordmark size="lg" tagline={false} className="mt-4" />
-          {lang === 'fa' && (
-            <div className="mt-1.5 text-sm font-medium text-odyssey-deep/70 dark:text-odyssey-silver/80">
-              اودیسه
-            </div>
-          )}
+          <OdysseyLogoImage className="h-44 w-44 shadow-[0_24px_70px_-20px_oklch(0.5_0.1_220/0.5)]" />
           <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-odyssey-cyan/12 px-3 py-1 text-[11px] font-semibold text-odyssey-deep ring-1 ring-inset ring-odyssey-cyan/30 dark:text-odyssey-bright">
             <span className="h-1.5 w-1.5 rounded-full bg-odyssey-cyan animate-breathe" />
             {t('multi-protocol · anti-filter · self-hosted')}

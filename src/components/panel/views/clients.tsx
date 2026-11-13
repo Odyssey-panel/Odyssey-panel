@@ -409,36 +409,7 @@ export function ClientsView() {
                           <Progress value={pct} aria-label="Traffic used" />
                         </div>
                       )}
-                      {links.length > 0 ? (
-                        <div className="mt-2.5 flex items-center gap-1.5" dir="ltr">
-                          <div className="min-w-0 flex-1 rounded-md border bg-muted/40 px-2.5 py-1.5">
-                            <p className="truncate font-mono text-[11px] text-muted-foreground">{links[0]}</p>
-                          </div>
-                          {links.length > 1 && (
-                            <Badge variant="outline" className="shrink-0 font-mono text-[10px]">
-                              +{links.length - 1}
-                            </Badge>
-                          )}
-                          <CopyButton
-                            value={links.length > 1 ? links.join('\n') : links[0]}
-                            label={t('Config')}
-                            className="shrink-0"
-                          />
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            className="shrink-0 px-2"
-                            aria-label={t('Show QR')}
-                            onClick={() => setQr({ open: true, value: links[0], name: c.name })}
-                          >
-                            <QrCode className="h-3.5 w-3.5" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="mt-2.5 rounded-md border border-dashed px-2.5 py-1.5 text-[11px] text-muted-foreground">
-                          {t('No config yet — open Manage and add a proxy account to get its vless:// address')}
-                        </div>
-                      )}
+
                     </div>
                     <div className="flex flex-wrap items-center gap-1.5">
                       <Button variant="outline" size="sm" onClick={() => setQr({ open: true, value: subUrl(c), name: c.name })}>
@@ -459,6 +430,12 @@ export function ClientsView() {
                       </Button>
                     </div>
                   </div>
+
+                  {/* Config address — full text right on the card, next to the buttons */}
+                  <ConfigAddressBlock
+                    links={links}
+                    onQr={(value) => setQr({ open: true, value, name: c.name })}
+                  />
                 </CardContent>
               </Card>
             )
@@ -841,6 +818,62 @@ function EditClientDialog({ client, onOpenChange, onDone }: { client: ClientRow;
 }
 
 // ---------------------------------------------------------------------------
+// Config address — the full vless:// link right on the user card, next to the
+// action buttons (no longer buried inside the Manage dialog).
+// ---------------------------------------------------------------------------
+
+function ConfigAddressBlock({ links, onQr }: { links: string[]; onQr: (value: string) => void }) {
+  const [expanded, setExpanded] = useState(false)
+  const { t } = useLang()
+  if (links.length === 0) {
+    return (
+      <div className="mt-3 rounded-md border border-dashed px-2.5 py-1.5 text-[11px] text-muted-foreground">
+        {t('No config yet — open Manage and add a proxy account to get its vless:// address')}
+      </div>
+    )
+  }
+  const text = links.join('\n')
+  return (
+    <div className="mt-3 rounded-lg border bg-muted/30 p-2.5" dir="ltr">
+      <div className="mb-1.5 flex items-center justify-between gap-2" dir="rtl">
+        <span className="text-xs font-semibold text-muted-foreground">{t('Config address')}</span>
+        <div className="flex shrink-0 items-center gap-1.5" dir="ltr">
+          <CopyButton value={text} label={t('Copy')} />
+          <Button
+            variant="outline"
+            size="sm"
+            className="px-2"
+            aria-label={t('Show QR')}
+            onClick={() => onQr(links[0])}
+          >
+            <QrCode className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => setExpanded((v) => !v)}
+        aria-expanded={expanded}
+        className="block w-full cursor-pointer text-start"
+      >
+        <p
+          className={`whitespace-pre-wrap break-all font-mono text-[11px] leading-relaxed text-foreground/80 ${
+            expanded ? '' : 'line-clamp-2'
+          }`}
+        >
+          {text}
+        </p>
+      </button>
+      {links.length > 1 && !expanded && (
+        <p className="mt-1 text-[10px] text-muted-foreground" dir="rtl">
+          {t('+{n} more config(s) — tap to show all', { n: links.length - 1 })}
+        </p>
+      )}
+    </div>
+  )
+}
+
+// ---------------------------------------------------------------------------
 // Detail dialog (subscription + accounts)
 // ---------------------------------------------------------------------------
 
@@ -1122,7 +1155,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
   const [host, setHost] = useState('')
   const [tls, setTls] = useState(true)
   const [fragment, setFragment] = useState('')
-  const [remark, setRemark] = useState(defaultRemark)
+  const [remark, setRemark] = useState(`Odyssey-${defaultRemark}`)
   const [busy, setBusy] = useState(false)
   const { t } = useLang()
 
@@ -1199,7 +1232,10 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
               </div>
               <div className="space-y-1.5">
                 <Label>{t('Remark')}</Label>
-                <Input value={remark} onChange={(e) => setRemark(e.target.value)} />
+                <Input value={remark} onChange={(e) => setRemark(e.target.value)} placeholder="Odyssey-…" />
+                <p className="text-[10px] leading-relaxed text-muted-foreground">
+                  {t('Every config is named Odyssey-… automatically')}
+                </p>
               </div>
             </div>
             {protocol !== 'vless' && (

@@ -48,6 +48,9 @@ node prisma/seed.boot.mjs || true
 echo "[boot] repairing URL-pasted addresses (one-time normalization)…"
 node scripts/migrate-addresses.mjs || true
 
+echo "[boot] enforcing the Odyssey- prefix on every config name…"
+node scripts/migrate-remarks.mjs || true
+
 echo "[boot] preparing built-in backend (xray config)…"
 node scripts/xray-sync.mjs --config-only || true
 
