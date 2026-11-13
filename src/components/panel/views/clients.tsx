@@ -42,7 +42,7 @@ import { api, useApi } from '../api'
 import { bytesToGb, daysLeft, formatBytes, formatDate, trafficState } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { toast } from 'sonner'
-import { buildShareLink, buildDeepLinks, buildTelegramTapLink } from '@/lib/links'
+import { buildShareLink, buildDeepLinks, buildTelegramTapLink, addressKind } from '@/lib/links'
 import { runDeviceTest, type TunnelTestResult } from '@/lib/selftest'
 import { ISP_PRESETS, ispFragment } from '@/lib/isps'
 import {
@@ -100,6 +100,16 @@ type ClientRow = {
 
 const PROTOCOLS = ['vless', 'vmess', 'trojan', 'shadowsocks', 'hysteria2', 'tuic', 'mtproto'] as const
 const TRANSPORTS = ['ws', 'grpc', 'tcp'] as const
+
+function isValidServerHost(value: string): boolean {
+  const host = value.trim().replace(/^\\[|\\]$/g, '')
+  if (!host) return false
+  if (/^\\d{1,3}(\\.\\d{1,3}){3}$/.test(host)) return host.split('.').every((part) => Number(part) >= 0 && Number(part) <= 255)
+  if (host.includes(':')) {
+    try { new URL(`http://[${host}]/`); return true } catch { return false }
+  }
+  return host.length <= 253 && /^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/.test(host)
+}
 /** Protocols with xray-style stream fields (transport/path/host/TLS switch). */
 const STREAM_PROTOS = new Set(['vless', 'vmess', 'trojan', 'shadowsocks'])
 /** Fragment only applies to URL-style TLS links (vless/trojan). */
@@ -542,6 +552,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const [protocol, setProtocol] = useState<string>('vless')
   const [fragmentOn, setFragmentOn] = useState(true)
   const [fragment, setFragment] = useState('100-200,20-30,tlshello')
+  const [selectedFragmentPreset, setSelectedFragmentPreset] = useState<string | null>(null)
   const [backendMode, setBackendMode] = useState<BackendMode>('builtin')
   const [workerId, setWorkerId] = useState('')
   const { data: workersData } = useApi<{ workers: WorkerRow[] }>(open ? '/api/admin/workers' : null)
@@ -572,6 +583,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
     // needs zero extra input; for other sources an address must be present.
     const fields = backendSubmitFields(backendMode, pickedWorker, { address, port, sni, host, path, transport, tls })
     const withProxy = withAccount && (usePicker ? backendMode === 'builtin' || Boolean(fields.address) : Boolean(fields.address))
+    if (withAccount && (backendMode === 'own' || !usePicker) && !isValidServerHost(fields.address)) {
+      toast.error(t('Enter a valid IPv4, IPv6 or domain address'))
+      return
+    }
     const skippedProxy = withAccount && !withProxy
     if (withProxy && usePicker && backendMode === 'worker' && !pickedWorker) {
       toast.error(t('Pick a worker first (or register one in Nodes & workers)'))
@@ -666,10 +681,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-odyssey-navy/10 text-[10px] font-bold text-odyssey-deep dark:bg-odyssey-cyan/15 dark:text-odyssey-bright">2</span>
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('Config')}</span>
               </div>
-              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
-                {t('Generate config now')}
-                <Switch checked={withAccount} onCheckedChange={setWithAccount} aria-label={t('Generate config now')} />
-              </label>
+              <div className="flex items-center gap-2 text-xs font-medium">
+                <span>{t('Generate config now')}</span>
+                <Switch dir="ltr" checked={withAccount} onCheckedChange={setWithAccount} aria-label={t('Generate config now')} />
+              </div>
             </div>
 
             {withAccount && (
@@ -706,8 +721,12 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                               key={isp.id}
                               type="button"
                               title={isp.note}
-                              onClick={() => setFragment(ispFragment(isp))}
-                              className="rounded-full border bg-white/[0.03] px-2 py-0.5 text-[11px] transition-all hover:-translate-y-0.5 hover:border-odyssey-cyan/40 hover:bg-odyssey-cyan/10 dark:bg-white/[0.04]"
+                              onClick={() => {
+                                setFragment(ispFragment(isp))
+                                setSelectedFragmentPreset(isp.id)
+                              }}
+                              aria-pressed={selectedFragmentPreset === isp.id}
+                              className={selectedFragmentPreset === isp.id ? "rounded-full border border-sky-400 bg-sky-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg shadow-sky-500/25" : "rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-all hover:border-sky-400/60 hover:bg-sky-400/10 hover:text-foreground"}
                             >
                               {isp.name}
                             </button>
@@ -715,7 +734,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                         </div>
                         <Input
                           value={fragment}
-                          onChange={(e) => setFragment(e.target.value)}
+                          onChange={(e) => {
+                            setFragment(e.target.value)
+                            setSelectedFragmentPreset(null)
+                          }}
                           placeholder="100-200,20-30,tlshello"
                           dir="ltr"
                           className="font-mono text-xs"
@@ -739,6 +761,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                             ? 'border-cyan-400/40 bg-cyan-400/10 text-foreground'
                             : 'border-border/60 text-muted-foreground hover:bg-white/[0.04]'
                         }`}
+                        aria-pressed={protocol === p}
                       >
                         {p}
                       </button>
@@ -786,8 +809,11 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                               toast.success(t('Pasted URL detected — fields were filled automatically'))
                             }
                           }}
-                          placeholder="vps.example.com یا 2001:db8::1 یا https://foo.workers.dev"
+                          placeholder="203.0.113.10 · 2001:db8::1 · vpn.example.com"
+                          dir="ltr"
+                          inputMode="url"
                         />
+                        <p className="text-[10px] text-muted-foreground" dir="rtl">{t("Supported: IPv4, IPv6 and domain names")} · {addressKind(address) === "ipv4" ? "IPv4" : addressKind(address) === "ipv6" ? "IPv6" : addressKind(address) === "domain" ? t("Domain") : t("Waiting for address")}</p>
                       </div>
                       <div className="space-y-1.5">
                         <Label>{t('Port *')}</Label>
