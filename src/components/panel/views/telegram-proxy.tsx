@@ -30,17 +30,17 @@ export function TelegramProxyView() {
 
   const installScript = useMemo(() => {
     if (!secret) return ''
-    const safePort = /^\d+$/.test(port) && Number(port) >= 1 && Number(port) <= 65535 ? Number(port) : 443
+    const safePort = /^\\d+$/.test(port) && Number(port) >= 1 && Number(port) <= 65535 ? Number(port) : 443
     return `#!/usr/bin/env bash
-set -euo pipefail
+set -Eeuo pipefail
 
-# Odyssey MTProto installer — Ubuntu/Debian
+# Odyssey MTProto — official Telegram MTProxy source, Ubuntu/Debian
 PORT=${safePort}
 SECRET='${secret}'
 WORKDIR=/opt/odyssey-mtproxy
 
 if [ "$(id -u)" -ne 0 ]; then
-  echo "Run this installer as root: sudo bash install-mtproxy.sh"
+  echo "Run as root: sudo bash install-mtproxy.sh"
   exit 1
 fi
 
@@ -48,49 +48,100 @@ export DEBIAN_FRONTEND=noninteractive
 apt-get update
 apt-get install -y --no-install-recommends git curl build-essential libssl-dev zlib1g-dev ca-certificates
 
-mkdir -p "$WORKDIR"
+install -d -o root -g root -m 0755 "$WORKDIR"
 if [ ! -d "$WORKDIR/.git" ]; then
   git clone --depth 1 https://github.com/TelegramMessenger/MTProxy.git "$WORKDIR"
 else
-  git -C "$WORKDIR" pull --ff-only
+  git -C "$WORKDIR" fetch --depth 1 origin
+  git -C "$WORKDIR" reset --hard FETCH_HEAD
 fi
 
 make -C "$WORKDIR"
+install -m 0755 "$WORKDIR/objs/bin/mtproto-proxy" /usr/local/bin/mtproto-proxy
 curl -fsSL https://core.telegram.org/getProxySecret -o "$WORKDIR/proxy-secret"
 curl -fsSL https://core.telegram.org/getProxyConfig -o "$WORKDIR/proxy-multi.conf"
-install -m 0755 "$WORKDIR/objs/bin/mtproto-proxy" /usr/local/bin/mtproto-proxy
 chmod 0644 "$WORKDIR/proxy-secret" "$WORKDIR/proxy-multi.conf"
 
+# systemd starts as root so port 443 can be bound; MTProxy drops privileges to nobody via -u.
 cat >/etc/systemd/system/odyssey-mtproxy.service <<UNIT
 [Unit]
 Description=Odyssey Telegram MTProto Proxy
-After=network-online.target
 Wants=network-online.target
+After=network-online.target
 
 [Service]
 Type=simple
-User=nobody
-Group=nogroup
-ExecStart=/usr/local/bin/mtproto-proxy -u nobody -p 8888 -H ${safePort} -S ${secret} --aes-pwd ${WORKDIR}/proxy-secret ${WORKDIR}/proxy-multi.conf -M 1
-Restart=always
-RestartSec=3
+WorkingDirectory=$WORKDIR
+ExecStart=/usr/local/bin/mtproto-proxy -u nobody -p 8888 -H $PORT -S $SECRET --aes-pwd $WORKDIR/proxy-secret $WORKDIR/proxy-multi.conf -M 1
+Restart=on-failure
+RestartSec=5
 LimitNOFILE=65536
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectHome=true
 
 [Install]
 WantedBy=multi-user.target
 UNIT
 
+# Telegram recommends refreshing its server configuration periodically.
+cat >/usr/local/sbin/odyssey-mtproxy-update-config <<'SCRIPT'
+#!/usr/bin/env bash
+set -Eeuo pipefail
+curl -fsSL https://core.telegram.org/getProxyConfig -o /opt/odyssey-mtproxy/proxy-multi.conf.tmp
+install -m 0644 /opt/odyssey-mtproxy/proxy-multi.conf.tmp /opt/odyssey-mtproxy/proxy-multi.conf
+rm -f /opt/odyssey-mtproxy/proxy-multi.conf.tmp
+systemctl try-restart odyssey-mtproxy.service
+SCRIPT
+chmod 0755 /usr/local/sbin/odyssey-mtproxy-update-config
+
+cat >/etc/systemd/system/odyssey-mtproxy-update.service <<'UNIT'
+[Unit]
+Description=Refresh Telegram MTProxy server configuration
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/sbin/odyssey-mtproxy-update-config
+UNIT
+
+cat >/etc/systemd/system/odyssey-mtproxy-update.timer <<'UNIT'
+[Unit]
+Description=Daily Telegram MTProxy configuration refresh
+
+[Timer]
+OnCalendar=daily
+RandomizedDelaySec=30m
+Persistent=true
+
+[Install]
+WantedBy=timers.target
+UNIT
+
+if command -v ufw >/dev/null 2>&1 && ufw status | grep -q "Status: active"; then
+  ufw allow "$PORT/tcp"
+fi
+
 systemctl daemon-reload
-systemctl enable --now odyssey-mtproxy
-if command -v ufw >/dev/null 2>&1; then ufw allow ${safePort}/tcp || true; fi
+systemctl enable --now odyssey-mtproxy.service
+systemctl enable --now odyssey-mtproxy-update.timer
+sleep 2
 
 echo
-echo "MTProxy service status:"
-systemctl --no-pager --full status odyssey-mtproxy || true
+echo "=== Odyssey MTProxy status ==="
+systemctl --no-pager --full status odyssey-mtproxy.service || true
+if systemctl is-active --quiet odyssey-mtproxy.service; then
+  echo "Service is active."
+else
+  echo "ERROR: service did not start. Inspect: journalctl -u odyssey-mtproxy -n 100 --no-pager"
+  exit 1
+fi
+
 echo
-echo "Client secret (random-padding mode): dd${secret}"
-echo "Open TCP port ${safePort} in your VPS/cloud firewall."
-echo "Telegram link template: https://t.me/proxy?server=YOUR_SERVER_IP&port=${safePort}&secret=dd${secret}"
+echo "Client secret: dd${secret}"
+echo "Listening TCP port: $PORT"
+echo "IMPORTANT: also allow inbound TCP/$PORT in your VPS provider firewall/security list."
+echo "Telegram link: https://t.me/proxy?server=YOUR_PUBLIC_IP_OR_DOMAIN&port=$PORT&secret=dd${secret}"
 `
   }, [secret, port])
 
