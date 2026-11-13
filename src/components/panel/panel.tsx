@@ -225,7 +225,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
 
         {/* Mobile bottom navigation */}
         <nav
-          className="glass fixed inset-x-0 bottom-0 z-40 border-t bg-background/80 pb-[max(env(safe-area-inset-bottom),0.4rem)] pt-1.5 backdrop-blur-xl"
+          className="glass liquid-glass-nav fixed inset-x-2 bottom-0 z-40 rounded-t-[1.35rem] border pb-[max(env(safe-area-inset-bottom),0.55rem)] pt-2 backdrop-blur-2xl"
           aria-label="Mobile navigation"
         >
           <div className="mx-auto grid max-w-lg grid-cols-7">
