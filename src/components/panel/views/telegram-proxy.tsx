@@ -30,7 +30,7 @@ export function TelegramProxyView() {
 
   const installScript = useMemo(() => {
     if (!secret) return ''
-    const safePort = /^\\d+$/.test(port) && Number(port) >= 1 && Number(port) <= 65535 ? Number(port) : 443
+    const safePort = /^\d+$/.test(port) && Number(port) >= 1 && Number(port) <= 65535 ? Number(port) : 443
     return `#!/usr/bin/env bash
 set -Eeuo pipefail
 
