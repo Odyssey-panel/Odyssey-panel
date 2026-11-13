@@ -4,10 +4,26 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Login } from '@/components/panel/login'
 import { Panel } from '@/components/panel/panel'
+import { prewarm } from '@/components/panel/api'
 import { useLang } from '@/lib/i18n'
 
 /** Throttle so five parallel 401s don't spam five identical toasts. */
 let lastSessionToastAt = 0
+
+/** Session flag for instant restore — the real check still runs in background. */
+const AUTH_FLAG = 'odyssey:authed'
+
+function rememberAuth() {
+  try {
+    sessionStorage.setItem(AUTH_FLAG, '1')
+  } catch {}
+}
+
+function forgetAuth() {
+  try {
+    sessionStorage.removeItem(AUTH_FLAG)
+  } catch {}
+}
 
 export default function Home() {
   const [authed, setAuthed] = useState<boolean | null>(null)
@@ -15,19 +31,41 @@ export default function Home() {
 
   useEffect(() => {
     let cancelled = false
+    // Instant restore: a returning visitor gets the panel on frame one; the
+    // real session check runs in parallel (a dead session flips back to the
+    // login screen via the 401 event below).
+    let optimistic = false
+    try {
+      optimistic = sessionStorage.getItem(AUTH_FLAG) === '1'
+    } catch {}
+    if (optimistic && !cancelled) {
+      setAuthed(true)
+      prewarm(['/api/admin/stats', '/api/admin/clients'])
+    }
     const check = async () => {
       try {
         const res = await fetch('/api/auth/me')
         const data = (await res.json()) as { ok: boolean }
-        if (!cancelled) setAuthed(data.ok)
+        if (cancelled) return
+        if (data.ok) {
+          rememberAuth()
+          if (!optimistic) prewarm(['/api/admin/stats', '/api/admin/clients'])
+        } else {
+          forgetAuth()
+        }
+        setAuthed(data.ok)
       } catch {
-        if (!cancelled) setAuthed(false)
+        if (!cancelled) {
+          forgetAuth()
+          setAuthed(false)
+        }
       }
     }
     void check()
     // Session died mid-use (expiry, new panel secret, …): return to the login
     // screen and tell the admin why, instead of leaving "Unauthorized" errors.
     const onUnauthorized = () => {
+      forgetAuth()
       setAuthed(false)
       const now = Date.now()
       if (now - lastSessionToastAt > 5000) {
@@ -37,7 +75,10 @@ export default function Home() {
     }
     // Deliberate sign-out: just switch to the login screen (a toast is already
     // shown by the logout button itself).
-    const onSignedOut = () => setAuthed(false)
+    const onSignedOut = () => {
+      forgetAuth()
+      setAuthed(false)
+    }
     window.addEventListener('panel:unauthorized', onUnauthorized)
     window.addEventListener('panel:signedout', onSignedOut)
     return () => {
@@ -58,5 +99,5 @@ export default function Home() {
     )
   }
 
-  return authed ? <Panel /> : <Login onSuccess={() => setAuthed(true)} />
+  return authed ? <Panel /> : <Login onSuccess={() => { rememberAuth(); prewarm(['/api/admin/stats', '/api/admin/clients']); setAuthed(true) }} />
 }

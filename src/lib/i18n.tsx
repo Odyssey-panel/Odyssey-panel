@@ -165,6 +165,15 @@ const FA: Record<string, string> = {
   QR: 'QR',
   'Sub link': 'لینک اشتراک',
   Manage: 'مدیریت',
+  // new-config dialog
+  'New config': 'کانفیگ جدید',
+  'A subscriber with a unique subscription link — plus a ready-to-use config if you want one.':
+    'یک مشترک با لینک اشتراک اختصاصی — اگه بخوای یه کانفیگ آماده هم برایش ساخته می‌شود.',
+  'User info': 'اطلاعات کاربر',
+  'Config will be named': 'نام کانفیگ:',
+  'Generate config now': 'ساخت کانفیگ همین حالا',
+  'ON — this config only': 'روشن — فقط روی همین کانفیگ',
+  'OFF — plain TLS handshake': 'خاموش — هندشیک TLS ساده',
   'Delete user “{name}”?': 'حذف کاربر «{name}»؟',
   'This permanently removes the user, all proxy accounts and revokes the subscription link.':
     'این کار کاربر و همه حساب‌های پروکسی را برای همیشه حذف می‌کند و لینک اشتراک را باطل می‌کند.',

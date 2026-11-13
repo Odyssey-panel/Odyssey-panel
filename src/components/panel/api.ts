@@ -10,8 +10,27 @@ export class ApiError extends Error {
   }
 }
 
+// ────────────────────────────────────────────────────────────────────────────
+// Instant-switch cache (SWR-style): GET responses are kept in memory so a
+// view that remounts renders its data on the FIRST paint (no spinner, no
+// waiting for the network) and then quietly revalidates in the background.
+// This is what makes switching views feel like "speed of light".
+// ────────────────────────────────────────────────────────────────────────────
+
+type CacheEntry = { data: unknown; at: number }
+const cache = new Map<string, CacheEntry>()
+
+/** Background revalidate if the cached copy is older than this. */
+const STALE_MS = 15_000
+
+/** Fire-and-forget GETs that fill the cache before a view even mounts. */
+export function prewarm(urls: string[]) {
+  for (const u of urls) void api(u).catch(() => {})
+}
+
 export async function api<T>(url: string, opts?: RequestInit): Promise<T> {
   const res = await fetch(url, {
+    cache: 'no-store',
     ...opts,
     headers: { 'content-type': 'application/json', ...(opts?.headers || {}) },
   })
@@ -27,6 +46,7 @@ export async function api<T>(url: string, opts?: RequestInit): Promise<T> {
   }
   const data = (await res.json().catch(() => ({}))) as T & { error?: string }
   if (!res.ok) throw new ApiError(data.error || `Request failed (${res.status})`, res.status)
+  if (!opts?.method || opts.method === 'GET') cache.set(url, { data, at: Date.now() })
   return data as T
 }
 
@@ -36,6 +56,7 @@ export function useApi<T>(url: string | null, deps: unknown[] = []) {
   const [error, setError] = useState<string | null>(null)
   const urlRef = useRef(url)
   urlRef.current = url
+  const lastFetchAt = useRef(0)
 
   const reload = useCallback(async () => {
     const u = urlRef.current
@@ -43,6 +64,7 @@ export function useApi<T>(url: string | null, deps: unknown[] = []) {
     try {
       setError(null)
       const d = await api<T>(u)
+      lastFetchAt.current = Date.now()
       setData(d)
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e))
@@ -52,9 +74,29 @@ export function useApi<T>(url: string | null, deps: unknown[] = []) {
   }, [])
 
   useEffect(() => {
-    setLoading(Boolean(url))
+    // Hydrate instantly from cache — the view paints real data on frame one.
+    const hit = url ? cache.get(url) : undefined
+    if (hit) {
+      setData(hit.data as T)
+      setLoading(false)
+    } else {
+      setLoading(Boolean(url))
+    }
     void reload()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [url, ...deps])
+
+  // Kept-alive views never remount, so the panel announces every view switch;
+  // each hook revalidates quietly if its data went stale.
+  useEffect(() => {
+    const onRevalidate = () => {
+      if (!urlRef.current) return
+      if (Date.now() - lastFetchAt.current < STALE_MS) return
+      void reload()
+    }
+    window.addEventListener('panel:revalidate', onRevalidate)
+    return () => window.removeEventListener('panel:revalidate', onRevalidate)
+  }, [reload])
 
   return { data, loading, error, reload, setData }
 }

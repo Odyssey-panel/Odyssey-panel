@@ -44,7 +44,7 @@ import { useLang } from '@/lib/i18n'
 import { toast } from 'sonner'
 import { buildShareLink, buildDeepLinks, buildTelegramTapLink } from '@/lib/links'
 import { runDeviceTest, type TunnelTestResult } from '@/lib/selftest'
-import { ISP_PRESETS } from '@/lib/isps'
+import { ISP_PRESETS, ispFragment } from '@/lib/isps'
 import {
   Plus,
   Search,
@@ -371,67 +371,84 @@ export function ClientsView() {
             const links = c.proxies.map((p) => buildShareLink(p)).filter(Boolean)
             return (
               <Card key={c.id} className="transition-colors hover:border-primary/30">
-                <CardContent className="p-4">
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <button
-                          className="text-base font-semibold hover:underline"
-                          onClick={() => setDetail(c)}
-                          aria-label={t('Open details for {name}', { name: c.name })}
-                        >
-                          {c.name}
-                        </button>
-                        <StatusBadge kind={state.kind} label={state.label} />
-                        {c.proxies.length > 0 && (
-                          <Badge variant="outline" className="font-mono text-xs">
-                            {c.proxies.length} {t('accounts')}
-                          </Badge>
-                        )}
-                      </div>
-                      <div className="mt-1 text-xs text-muted-foreground">
-                        <span dir="ltr" className="inline-block">
-                          {c.limitBytes > 0
-                            ? `${formatBytes(c.usedBytes)} / ${formatBytes(c.limitBytes)}`
-                            : formatBytes(c.usedBytes)}
-                        </span>
-                        {c.limitBytes > 0 ? '' : ` ${t('used · unlimited')}`}
-                        {' · '}
-                        {c.expiresAt
-                          ? dl !== null && dl > 0
-                            ? t('expires in {d} days ({date})', { d: dl, date: formatDate(c.expiresAt, lang) })
-                            : t('expired {date}', { date: formatDate(c.expiresAt, lang) })
-                          : t('no expiry')}
-                        {c.note ? ` · ${c.note}` : ''}
-                      </div>
-                      {c.limitBytes > 0 && (
-                        <div className="mt-2 max-w-md">
-                          <Progress value={pct} aria-label="Traffic used" />
-                        </div>
-                      )}
-
-                    </div>
-                    <div className="flex flex-wrap items-center gap-1.5">
-                      <Button variant="outline" size="sm" onClick={() => setQr({ open: true, value: subUrl(c), name: c.name })}>
-                        <QrCode className="h-3.5 w-3.5" /> {t('QR')}
-                      </Button>
-                      <CopyButton value={subUrl(c)} label={t('Sub link')} />
-                      <Button variant="outline" size="sm" onClick={() => setDetail(c)}>
-                        <Pencil className="h-3.5 w-3.5" /> {t('Manage')}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="text-destructive"
-                        onClick={() => setDeleteTarget(c)}
-                        aria-label={t('Delete {name}', { name: c.name })}
+                <CardContent className="p-4 sm:p-5">
+                  {/* Header — avatar + name + badges ONLY. No buttons beside the
+                      name, so nothing can ever overlap it (mobile RTL bug). */}
+                  <div className="flex items-center gap-3">
+                    <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl rounded-tr-sm bg-gradient-to-br from-odyssey-navy to-odyssey-cyan text-sm font-bold text-white">
+                      {c.name.slice(0, 1).toUpperCase()}
+                    </span>
+                    <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
+                      <button
+                        className="truncate text-base font-semibold hover:underline"
+                        onClick={() => setDetail(c)}
+                        aria-label={t('Open details for {name}', { name: c.name })}
                       >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </Button>
+                        {c.name}
+                      </button>
+                      <StatusBadge kind={state.kind} label={state.label} />
+                      {c.proxies.length > 0 && (
+                        <Badge variant="outline" className="font-mono text-xs">
+                          {c.proxies.length} {t('accounts')}
+                        </Badge>
+                      )}
                     </div>
                   </div>
 
-                  {/* Config address — full text right on the card, next to the buttons */}
+                  {/* Meta line — aligned under the name */}
+                  <div className="mt-2 ps-[52px] text-xs leading-relaxed text-muted-foreground">
+                    <span dir="ltr" className="inline-block">
+                      {c.limitBytes > 0
+                        ? `${formatBytes(c.usedBytes)} / ${formatBytes(c.limitBytes)}`
+                        : formatBytes(c.usedBytes)}
+                    </span>
+                    {c.limitBytes > 0 ? '' : ` ${t('used · unlimited')}`}
+                    {' · '}
+                    {c.expiresAt
+                      ? dl !== null && dl > 0
+                        ? t('expires in {d} days ({date})', { d: dl, date: formatDate(c.expiresAt, lang) })
+                        : t('expired {date}', { date: formatDate(c.expiresAt, lang) })
+                      : t('no expiry')}
+                    {c.note ? ` · ${c.note}` : ''}
+                  </div>
+                  {c.limitBytes > 0 && (
+                    <div className="mt-2 max-w-md ps-[52px]">
+                      <Progress value={pct} aria-label="Traffic used" />
+                    </div>
+                  )}
+
+                  {/* Actions — a dedicated grid row: cells can never collide,
+                      thumb-sized on mobile (2×2), single row on desktop. */}
+                  <div className="mt-3 grid grid-cols-2 gap-2 sm:max-w-sm sm:grid-cols-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 justify-center px-2"
+                      onClick={() => setQr({ open: true, value: subUrl(c), name: c.name })}
+                    >
+                      <QrCode className="h-3.5 w-3.5" /> <span className="text-xs">{t('QR')}</span>
+                    </Button>
+                    <CopyButton value={subUrl(c)} label={t('Sub link')} className="h-9 justify-center" />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 justify-center px-2"
+                      onClick={() => setDetail(c)}
+                    >
+                      <Pencil className="h-3.5 w-3.5" /> <span className="text-xs">{t('Manage')}</span>
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      className="h-9 justify-center px-2 text-destructive"
+                      onClick={() => setDeleteTarget(c)}
+                      aria-label={t('Delete {name}', { name: c.name })}
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+
+                  {/* Config address — full text right on the card */}
                   <ConfigAddressBlock
                     links={links}
                     onQr={(value) => setQr({ open: true, value, name: c.name })}
@@ -523,6 +540,8 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const [note, setNote] = useState('')
   const [withAccount, setWithAccount] = useState(true)
   const [protocol, setProtocol] = useState<string>('vless')
+  const [fragmentOn, setFragmentOn] = useState(true)
+  const [fragment, setFragment] = useState('100-200,20-30,tlshello')
   const [backendMode, setBackendMode] = useState<BackendMode>('builtin')
   const [workerId, setWorkerId] = useState('')
   const { data: workersData } = useApi<{ workers: WorkerRow[] }>(open ? '/api/admin/workers' : null)
@@ -539,6 +558,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const isMtprotoC = protocol === 'mtproto'
   const isSingboxC = protocol === 'hysteria2' || protocol === 'tuic'
   const showStreamC = STREAM_PROTOS.has(protocol)
+  const showFragmentC = FRAGMENT_PROTOS.has(protocol)
   const usePicker = showStreamC
   const workers = workersData?.workers
   const pickedWorker = workers?.find((w) => w.id === workerId) || null
@@ -574,6 +594,8 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
           path: withProxy && !isMtprotoC && !isSingboxC ? fields.path : undefined,
           host: withProxy && !isMtprotoC && !isSingboxC ? fields.host : undefined,
           tls: withProxy && !isMtprotoC && !isSingboxC ? fields.tls : true,
+          // Fragment goes ONLY onto this one config, right at creation.
+          fragment: withProxy && showFragmentC && fragmentOn ? fragment.trim() || undefined : undefined,
         }),
       })
       toast.success(
@@ -592,56 +614,147 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-lg">
+      <DialogContent className="max-h-[92vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>{t('New user')}</DialogTitle>
-          <DialogDescription>{t('Creates a subscriber with a unique subscription token. Optionally generate the first proxy account.')}</DialogDescription>
+          <DialogTitle className="flex items-center gap-2.5">
+            <span className="flex h-8 w-8 items-center justify-center rounded-xl bg-gradient-to-br from-odyssey-navy to-odyssey-cyan text-white">
+              <Plus className="h-4 w-4" />
+            </span>
+            {t('New config')}
+          </DialogTitle>
+          <DialogDescription>
+            {t('A subscriber with a unique subscription link — plus a ready-to-use config if you want one.')}
+          </DialogDescription>
         </DialogHeader>
-        <div className="grid gap-3">
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="c-name">{t('Name *')}</Label>
-              <Input id="c-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="alice" />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="c-traffic">{t('Traffic limit (GB, 0 = unlimited)')}</Label>
-              <Input id="c-traffic" type="number" min="0" value={trafficGb} onChange={(e) => setTrafficGb(e.target.value)} />
-            </div>
-          </div>
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="space-y-1.5">
-              <Label htmlFor="c-days">{t('Valid for (days, 0 = never)')}</Label>
-              <Input id="c-days" type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)} />
-            </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="c-note">{t('Note')}</Label>
-              <Input id="c-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('friend, family, …')} />
-            </div>
-          </div>
 
-          <Separator />
-          <div className="flex items-center justify-between">
-            <div>
-              <div className="text-sm font-medium">{t('Generate proxy account now')}</div>
-              <div className="text-xs text-muted-foreground">{t('VLESS/VMess get a UUID; Trojan/SS get a password')}</div>
+        <div className="space-y-5">
+          {/* ── 1 · User ── */}
+          <section className="space-y-3">
+            <div className="flex items-center gap-2">
+              <span className="flex h-5 w-5 items-center justify-center rounded-full bg-odyssey-navy/10 text-[10px] font-bold text-odyssey-deep dark:bg-odyssey-cyan/15 dark:text-odyssey-bright">1</span>
+              <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('User info')}</span>
             </div>
-            <Switch checked={withAccount} onCheckedChange={setWithAccount} aria-label={t('Generate proxy account now')} />
-          </div>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="c-name">{t('Name *')}</Label>
+                <Input id="c-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="alice" autoComplete="off" />
+                {name.trim() && (
+                  <p className="text-[11px] text-muted-foreground">
+                    {t('Config will be named')} <span dir="ltr" className="font-mono font-medium text-foreground/80">Odyssey-{name.trim()}</span>
+                  </p>
+                )}
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="c-traffic">{t('Traffic limit (GB, 0 = unlimited)')}</Label>
+                <Input id="c-traffic" type="number" min="0" value={trafficGb} onChange={(e) => setTrafficGb(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="c-days">{t('Valid for (days, 0 = never)')}</Label>
+                <Input id="c-days" type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="c-note">{t('Note')}</Label>
+                <Input id="c-note" value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('friend, family, …')} />
+              </div>
+            </div>
+          </section>
 
-          {withAccount && (
-            <div className="grid gap-3 rounded-lg border p-3">
-              <div className="grid gap-3 sm:grid-cols-3">
+          {/* ── 2 · Config ── */}
+          <section className="space-y-3 rounded-xl border bg-muted/20 p-3.5 sm:p-4">
+            <div className="flex items-center justify-between gap-3">
+              <div className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-odyssey-navy/10 text-[10px] font-bold text-odyssey-deep dark:bg-odyssey-cyan/15 dark:text-odyssey-bright">2</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('Config')}</span>
+              </div>
+              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
+                {t('Generate config now')}
+                <Switch checked={withAccount} onCheckedChange={setWithAccount} aria-label={t('Generate config now')} />
+              </label>
+            </div>
+
+            {withAccount && (
+              <div className="space-y-3.5">
+                {/* ── Fragment — the requested one-tap anti-filter button, at the
+                       top of creation, applied to THIS config only ── */}
+                {showFragmentC && (
+                  <div
+                    className={`rounded-xl border p-3 transition-colors ${
+                      fragmentOn
+                        ? 'border-odyssey-cyan/40 bg-odyssey-cyan/[0.07] shadow-[inset_0_0_0_1px_oklch(0.72_0.1_214/0.12)]'
+                        : 'border-border/60'
+                    }`}
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex min-w-0 items-center gap-2.5">
+                        <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-odyssey-cyan/15 ring-1 ring-inset ring-odyssey-cyan/30">
+                          <Zap className="h-4 w-4 text-odyssey-deep dark:text-odyssey-bright" />
+                        </span>
+                        <div className="min-w-0">
+                          <div className="text-sm font-semibold leading-tight">{t('Fragment (anti-filter)')}</div>
+                          <div className="mt-0.5 text-[11px] leading-tight text-muted-foreground">
+                            {fragmentOn ? t('ON — this config only') : t('OFF — plain TLS handshake')}
+                          </div>
+                        </div>
+                      </div>
+                      <Switch checked={fragmentOn} onCheckedChange={setFragmentOn} aria-label={t('Fragment (anti-filter)')} />
+                    </div>
+                    {fragmentOn && (
+                      <div className="mt-3 space-y-2">
+                        <div className="flex flex-wrap gap-1">
+                          {ISP_PRESETS.map((isp) => (
+                            <button
+                              key={isp.id}
+                              type="button"
+                              title={isp.note}
+                              onClick={() => setFragment(ispFragment(isp))}
+                              className="rounded-full border bg-white/[0.03] px-2 py-0.5 text-[11px] transition-all hover:-translate-y-0.5 hover:border-odyssey-cyan/40 hover:bg-odyssey-cyan/10 dark:bg-white/[0.04]"
+                            >
+                              {isp.name}
+                            </button>
+                          ))}
+                        </div>
+                        <Input
+                          value={fragment}
+                          onChange={(e) => setFragment(e.target.value)}
+                          placeholder="100-200,20-30,tlshello"
+                          dir="ltr"
+                          className="font-mono text-xs"
+                        />
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Protocol — quick chips instead of a dropdown */}
                 <div className="space-y-1.5">
                   <Label>{t('Protocol')}</Label>
-                  <Select value={protocol} onValueChange={setProtocol}>
-                    <SelectTrigger aria-label={t('Protocol')}><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {PROTOCOLS.map((p) => <SelectItem key={p} value={p}>{p}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
+                  <div className="flex flex-wrap gap-1.5">
+                    {PROTOCOLS.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        onClick={() => setProtocol(p)}
+                        className={`rounded-lg border px-2.5 py-1.5 font-mono text-xs font-medium uppercase transition-colors ${
+                          protocol === p
+                            ? 'border-cyan-400/40 bg-cyan-400/10 text-foreground'
+                            : 'border-border/60 text-muted-foreground hover:bg-white/[0.04]'
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                  </div>
+                  {protocol !== 'vless' && (
+                    <p className="rounded-lg border border-amber-500/40 bg-amber-500/10 p-2.5 text-[11px] leading-relaxed text-amber-700 dark:text-amber-400">
+                      {t('Heads-up: the built-in backend runs vless only. Other protocols need your own server at the address below — otherwise that config will not connect.')}
+                    </p>
+                  )}
                 </div>
-                {usePicker && backendMode !== 'own' ? (
-                  <div className="space-y-1.5 sm:col-span-2">
+
+                {/* Where the config runs — always visible so the mode can be
+                    switched back and forth (was locked once "own" was chosen) */}
+                {usePicker && (
+                  <div className="space-y-1.5">
                     <Label>{t('Where the config runs')}</Label>
                     <BackendPicker
                       mode={backendMode}
@@ -651,78 +764,84 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                       onWorkerIdChange={setWorkerId}
                     />
                   </div>
-                ) : (
-                  <div className="space-y-1.5 sm:col-span-2">
-                    <Label>{t('Server address / IP *')}</Label>
-                    <Input
-                      value={address}
-                      onChange={(e) => setAddress(e.target.value)}
-                      onBlur={() => {
-                        const r = repairPastedAddress(address)
-                        if (r) {
-                          setAddress(r.address)
-                          if (r.port) setPort(r.port)
-                          if (r.path) setPath(r.path)
-                          if (r.tls !== undefined) setTls(r.tls)
-                          if (r.sni && !sni.trim()) setSni(r.sni)
-                          toast.success(t('Pasted URL detected — fields were filled automatically'))
-                        }
-                      }}
-                      placeholder="vps.example.com یا 2001:db8::1 یا https://foo.workers.dev"
-                    />
-                  </div>
+                )}
+
+                {/* Manual server fields — only when the admin brings a server */}
+                {(!usePicker || backendMode === 'own') && (
+                  <>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="space-y-1.5 sm:col-span-2">
+                        <Label>{t('Server address / IP *')}</Label>
+                        <Input
+                          value={address}
+                          onChange={(e) => setAddress(e.target.value)}
+                          onBlur={() => {
+                            const r = repairPastedAddress(address)
+                            if (r) {
+                              setAddress(r.address)
+                              if (r.port) setPort(r.port)
+                              if (r.path) setPath(r.path)
+                              if (r.tls !== undefined) setTls(r.tls)
+                              if (r.sni && !sni.trim()) setSni(r.sni)
+                              toast.success(t('Pasted URL detected — fields were filled automatically'))
+                            }
+                          }}
+                          placeholder="vps.example.com یا 2001:db8::1 یا https://foo.workers.dev"
+                        />
+                      </div>
+                      <div className="space-y-1.5">
+                        <Label>{t('Port *')}</Label>
+                        <Input type="number" value={port} onChange={(e) => setPort(e.target.value)} />
+                      </div>
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-3">
+                      <div className="space-y-1.5">
+                        <Label>{isMtprotoC ? 'FakeTLS domain' : t('SNI / domain')}</Label>
+                        <Input value={sni} onChange={(e) => setSni(e.target.value)} placeholder={t('same as address')} />
+                      </div>
+                      {showStreamC && (
+                        <>
+                          <div className="space-y-1.5">
+                            <Label>{t('Transport')}</Label>
+                            <Select value={transport} onValueChange={setTransport}>
+                              <SelectTrigger aria-label={t('Transport')}><SelectValue /></SelectTrigger>
+                              <SelectContent>
+                                {TRANSPORTS.map((tr) => <SelectItem key={tr} value={tr}>{tr}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex items-center justify-between gap-2 rounded-lg border px-3">
+                            <Label htmlFor="c-tls" className="text-xs">TLS</Label>
+                            <Switch id="c-tls" checked={tls} onCheckedChange={setTls} />
+                          </div>
+                        </>
+                      )}
+                    </div>
+                    {showStreamC && (
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="space-y-1.5">
+                          <Label>{transport === 'grpc' ? t('Service name') : t('WS path')}</Label>
+                          <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/" />
+                        </div>
+                        <div className="space-y-1.5">
+                          <Label>{t('Host header')}</Label>
+                          <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t('optional')} />
+                        </div>
+                      </div>
+                    )}
+                  </>
+                )}
+                {isMtprotoC && (
+                  <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('MTProto: address = server IP, port = proxy port — the secret is generated automatically. Users open the link in Telegram.')}</p>
+                )}
+                {isSingboxC && (
+                  <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('Hysteria2/TUIC need a sing-box based server (Hiddify, s-ui, …); the config file has both client and server JSON.')}</p>
                 )}
               </div>
-              {(!usePicker || backendMode === 'own') && (
-                <>
-              <div className="grid gap-3 sm:grid-cols-3">
-                <div className="space-y-1.5">
-                  <Label>{t('Port *')}</Label>
-                  <Input type="number" value={port} onChange={(e) => setPort(e.target.value)} />
-                </div>
-                <div className="space-y-1.5">
-                  <Label>{isMtprotoC ? 'FakeTLS domain' : t('SNI / domain')}</Label>
-                  <Input value={sni} onChange={(e) => setSni(e.target.value)} placeholder={t('same as address')} />
-                </div>
-                {showStreamC && (
-                  <div className="flex items-center justify-between gap-2 rounded-lg border px-3">
-                    <Label htmlFor="c-tls" className="text-xs">TLS</Label>
-                    <Switch id="c-tls" checked={tls} onCheckedChange={setTls} />
-                  </div>
-                )}
-              </div>
-              {showStreamC && (
-                <div className="grid gap-3 sm:grid-cols-3">
-                  <div className="space-y-1.5">
-                    <Label>{t('Transport')}</Label>
-                    <Select value={transport} onValueChange={setTransport}>
-                      <SelectTrigger aria-label={t('Transport')}><SelectValue /></SelectTrigger>
-                      <SelectContent>
-                        {TRANSPORTS.map((tr) => <SelectItem key={tr} value={tr}>{tr}</SelectItem>)}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>{transport === 'grpc' ? t('Service name') : t('WS path')}</Label>
-                    <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/" />
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label>{t('Host header')}</Label>
-                    <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t('optional')} />
-                  </div>
-                </div>
-              )}
-                </>
-              )}
-              {isMtprotoC && (
-                <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('MTProto: address = server IP, port = proxy port — the secret is generated automatically. Users open the link in Telegram.')}</p>
-              )}
-              {isSingboxC && (
-                <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('Hysteria2/TUIC need a sing-box based server (Hiddify, s-ui, …); the config file has both client and server JSON.')}</p>
-              )}
-            </div>
-          )}
+            )}
+          </section>
         </div>
+
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
           <Button onClick={submit} disabled={busy || !name.trim()}>

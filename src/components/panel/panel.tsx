@@ -124,8 +124,21 @@ function ThemeButton() {
 
 export function Panel({ initialView }: { initialView?: ViewKey }) {
   const [view, setView] = useState<ViewKey>(initialView || 'dashboard')
+  // Keep-alive: once a view is opened it stays mounted (hidden) — switching
+  // back is instant, no refetch, scroll position preserved.
+  const [mountedViews, setMountedViews] = useState<Set<ViewKey>>(
+    () => new Set([initialView || 'dashboard']),
+  )
   const isMobile = useIsMobile()
   const { t, lang } = useLang()
+
+  const switchTo = (v: ViewKey) => {
+    setView(v)
+    setMountedViews((s) => (s.has(v) ? s : new Set(s).add(v)))
+    // Let every kept-alive view quietly refresh stale data in the background.
+    window.dispatchEvent(new Event('panel:revalidate'))
+    window.scrollTo({ top: 0 })
+  }
 
   const logout = async () => {
     try {
@@ -137,10 +150,10 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
     toast.success(lang === 'fa' ? 'خارج شدی 👋' : 'Signed out')
   }
 
-  const content = (() => {
-    switch (view) {
+  const renderView = (key: ViewKey) => {
+    switch (key) {
       case 'dashboard':
-        return <DashboardView onNavigate={setView} />
+        return <DashboardView onNavigate={switchTo} />
       case 'clients':
         return <ClientsView />
       case 'antifilter':
@@ -152,7 +165,17 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
       case 'settings':
         return <SettingsView />
     }
-  })()
+  }
+
+  const content = (
+    <>
+      {[...mountedViews].map((key) => (
+        <div key={key} className={view === key ? 'block' : 'hidden'} aria-hidden={view !== key}>
+          {renderView(key)}
+        </div>
+      ))}
+    </>
+  )
 
   const activeItem = NAV_ITEMS.find((n) => n.key === view)
 
@@ -176,7 +199,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
                 <DropdownMenuLabel>{t('Navigation')}</DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 {NAV_ITEMS.map((item) => (
-                  <DropdownMenuItem key={item.key} onClick={() => setView(item.key)}>
+                  <DropdownMenuItem key={item.key} onClick={() => switchTo(item.key)}>
                     <item.icon className="h-4 w-4" />
                     {t(item.label)}
                   </DropdownMenuItem>
@@ -206,7 +229,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
               return (
                 <button
                   key={item.key}
-                  onClick={() => setView(item.key)}
+                  onClick={() => switchTo(item.key)}
                   aria-current={active ? 'page' : undefined}
                   className="group flex flex-col items-center gap-1 py-1.5"
                 >
@@ -256,7 +279,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
               return (
                 <button
                   key={item.key}
-                  onClick={() => setView(item.key)}
+                  onClick={() => switchTo(item.key)}
                   className={cn(
                     'group relative flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                     active
