@@ -1,7 +1,9 @@
-import { verifySession } from '@/lib/auth'
+import { renewSessionIfDue, verifySession } from '@/lib/auth'
 
 export const runtime = 'nodejs'
 
 export async function GET() {
-  return Response.json({ ok: await verifySession() })
+  const ok = await verifySession()
+  if (ok) await renewSessionIfDue()
+  return Response.json({ ok })
 }

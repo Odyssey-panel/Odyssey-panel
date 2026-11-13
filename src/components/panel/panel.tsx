@@ -136,7 +136,9 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
     try {
       await api('/api/auth/logout', { method: 'POST' })
     } catch {}
-    window.dispatchEvent(new Event('panel:unauthorized'))
+    // "signedout" (not "unauthorized") so the login screen opens without the
+    // "session expired" warning on a deliberate logout.
+    window.dispatchEvent(new Event('panel:signedout'))
     toast.success(lang === 'fa' ? 'خارج شدی 👋' : 'Signed out')
   }
 

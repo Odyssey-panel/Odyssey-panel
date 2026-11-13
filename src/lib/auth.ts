@@ -3,7 +3,12 @@ import { createHmac, randomBytes, scryptSync, timingSafeEqual } from 'node:crypt
 import { getSettings, setSettings } from '@/lib/settings'
 
 const COOKIE_NAME = 'panel_session'
-const SESSION_TTL_MS = 12 * 60 * 60 * 1000 // 12 hours
+// 30 days — the admin should not be logged out every day just because the
+// session expired (the old 12h TTL made the panel look broken with 401s).
+const SESSION_TTL_MS = 30 * 24 * 60 * 60 * 1000
+// While the panel is actively used, slide the session forward once less than
+// this much time remains, so a busy admin is never interrupted.
+const RENEW_THRESHOLD_MS = 20 * 24 * 60 * 60 * 1000
 
 export function hashPassword(password: string, salt?: string) {
   const s = salt ?? randomBytes(16).toString('hex')
@@ -37,6 +42,23 @@ export async function createSession() {
     path: '/',
     maxAge: SESSION_TTL_MS / 1000,
   })
+}
+
+/**
+ * Slide the session forward: when the current cookie has less than
+ * RENEW_THRESHOLD_MS left, re-issue it with a fresh full TTL. Called from
+ * /api/auth/me which the panel hits on every load.
+ */
+export async function renewSessionIfDue() {
+  const store = await cookies()
+  const raw = store.get(COOKIE_NAME)?.value
+  if (!raw) return
+  const parts = raw.split('.')
+  if (parts.length !== 3) return
+  const exp = Number(parts[1])
+  if (!Number.isFinite(exp)) return
+  if (exp - Date.now() >= RENEW_THRESHOLD_MS) return
+  await createSession()
 }
 
 export async function destroySession() {

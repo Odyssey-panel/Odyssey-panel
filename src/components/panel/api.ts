@@ -16,8 +16,14 @@ export async function api<T>(url: string, opts?: RequestInit): Promise<T> {
     headers: { 'content-type': 'application/json', ...(opts?.headers || {}) },
   })
   if (res.status === 401) {
-    window.dispatchEvent(new Event('panel:unauthorized'))
-    throw new ApiError('Unauthorized', 401)
+    // Surface the server's actual reason ("Wrong password", …) instead of a
+    // generic Unauthorized — a wrong password on the login form is NOT a
+    // session expiry, so only broadcast session loss for admin API calls.
+    const body = (await res.json().catch(() => ({}))) as { error?: string }
+    if (!url.startsWith('/api/auth/login')) {
+      window.dispatchEvent(new Event('panel:unauthorized'))
+    }
+    throw new ApiError(body.error || 'Unauthorized', 401)
   }
   const data = (await res.json().catch(() => ({}))) as T & { error?: string }
   if (!res.ok) throw new ApiError(data.error || `Request failed (${res.status})`, res.status)

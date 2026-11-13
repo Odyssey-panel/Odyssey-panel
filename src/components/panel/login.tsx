@@ -4,9 +4,9 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Loader2, LockKeyhole } from 'lucide-react'
+import { Eye, EyeOff, Loader2, LockKeyhole } from 'lucide-react'
 import { toast } from 'sonner'
-import { api } from './api'
+import { api, ApiError } from './api'
 import { useLang } from '@/lib/i18n'
 import { LanguageSwitcher } from './panel'
 import { OdysseyEmblem, OdysseyWordmark } from './odyssey-logo'
@@ -23,6 +23,7 @@ function SeaOrbs() {
 
 export function Login({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const { t, lang } = useLang()
 
@@ -35,7 +36,12 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
       toast.success(t('Hello, sir 👋'), { description: t('Welcome back to your control panel') })
       onSuccess()
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : t('Login failed'))
+      if (err instanceof ApiError && err.status === 401) {
+        // Real reason from the server — never a vague "Unauthorized".
+        toast.error(t('Wrong password — check it and try again'))
+      } else {
+        toast.error(err instanceof Error ? err.message : t('Login failed'))
+      }
     } finally {
       setLoading(false)
     }
@@ -74,22 +80,36 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
           <div className="space-y-5">
             <div className="space-y-2">
               <Label htmlFor="password">{t('Admin password')}</Label>
-              <Input
-                id="password"
-                type="password"
-                autoFocus
-                placeholder="••••••••"
-                className="h-11"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
+              <div className="relative">
+                <Input
+                  id="password"
+                  type={showPw ? 'text' : 'password'}
+                  autoFocus
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                  dir="ltr"
+                  placeholder="••••••••"
+                  className="h-11 pe-11"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPw((v) => !v)}
+                  aria-label={showPw ? t('Hide password') : t('Show password')}
+                  className="absolute inset-y-0 end-2 my-auto flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground transition-colors hover:text-foreground"
+                >
+                  {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
             <Button type="submit" size="lg" className="w-full" disabled={loading || !password}>
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}
               {loading ? t('Signing in…') : t('Sign in')}
             </Button>
-            <p className="text-center text-xs text-muted-foreground">
-              {t('Default password is')} <span className="font-mono">admin123</span> {t('— change it in Settings.')}
+            <p className="text-center text-xs leading-relaxed text-muted-foreground">
+              {t('If it keeps failing, check the keyboard layout (EN) or Caps Lock — tap the eye to see what you typed.')}
             </p>
           </div>
         </form>

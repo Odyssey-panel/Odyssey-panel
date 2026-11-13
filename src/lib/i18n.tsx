@@ -50,8 +50,12 @@ const FA: Record<string, string> = {
   'Hello, sir 👋': 'سلام رئیس 👋',
   'Welcome back to your control panel': 'به پنل مدیریت خودت برگشتی',
   'Login failed': 'ورود ناموفق بود',
-  'Default password is': 'رمز پیش‌فرض',
-  '— change it in Settings.': '— بعداً از تنظیمات عوضش کن.',
+  'Wrong password — check it and try again': 'رمز اشتباه است — بررسیش کن و دوباره امتحان کن',
+  'If it keeps failing, check the keyboard layout (EN) or Caps Lock — tap the eye to see what you typed.':
+    'اگر باز نشد، چیدمان کیبورد (EN) یا Caps Lock را بررسی کن — با آیکون چشم ببین چه چیزی تایپ شده.',
+  'Show password': 'نمایش رمز',
+  'Hide password': 'پنهان کردن رمز',
+  'Session expired — please sign in again': 'نشست منقضی شد — لطفاً دوباره وارد شو',
   'self-hosted proxy & subscription panel': 'پنل سلف‌هاست پروکسی و اشتراک',
 
   // ── Dashboard ────────────────────────────────────────────────────────
