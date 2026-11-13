@@ -47,6 +47,7 @@ const FA: Record<string, string> = {
   'Admin password': 'رمز مدیر',
   'Sign in': 'ورود',
   'Signing in…': 'در حال ورود…',
+  'Use default password': 'رمز پیش‌فرض',
   'Hello, sir 👋': 'سلام رئیس 👋',
   'Welcome back to your control panel': 'به پنل مدیریت خودت برگشتی',
   'Login failed': 'ورود ناموفق بود',

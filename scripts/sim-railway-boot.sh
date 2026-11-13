@@ -1,8 +1,9 @@
 #!/bin/bash
 # Full simulation of the Odyssey Railway container boot — scenarios:
 #   A) fresh empty volume (clean deploy) — seeds from the repo-baked db,
-#      real admin password works, old default does NOT
+#      default password admin123 works, wrong passwords are rejected
 #   B1) volume with a 0-byte panel.db + broken prisma CLI — repo db seed rescues it
+#      (login with the default password works)
 #   B2) volume with garbage panel.db + broken CLI — template fallback restores schema
 #   C) volume with existing data (must NEVER be overwritten)
 #   D) user mistakes in the DATABASE_URL variable (the exact Railway incidents)
@@ -10,7 +11,8 @@ set -u
 SIM=/tmp/sim
 PROJ=/home/z/my-project
 PASS=0; FAIL=0
-REAL_PW='Ody-nnEEZ-YJsmc-EAMF5'
+DEFAULT_PW='admin123'
+WRONG_PW='this-is-not-the-password'
 
 say()  { echo -e "\n===== $* ====="; }
 chk()  { if [ "$1" = "$2" ]; then echo "PASS: $3"; PASS=$((PASS+1)); else echo "FAIL: $3 (got '$1' want '$2')"; FAIL=$((FAIL+1)); fi; }
@@ -50,10 +52,10 @@ say "A. fresh volume + working CLI (clean first deploy)"
   sh scripts/boot.sh > $SIM/bootA.log 2>&1 ) &
 PID_A=$!
 wait_up 8085; chk "$?" "0" "A: server healthy on /api/auth/me"
-login 8085 "$REAL_PW" > $SIM/loginA.json
-chk "$(cat $SIM/loginA.json)" '{"ok":true}' "A: login with the real admin password -> ok"
-login 8085 'admin123' > $SIM/loginA2.json
-chk "$(cat $SIM/loginA2.json)" '{"error":"Wrong password"}' "A: old default password rejected"
+login 8085 "$DEFAULT_PW" > $SIM/loginA.json
+chk "$(cat $SIM/loginA.json)" '{"ok":true}' "A: login admin123 (default) -> ok"
+login 8085 "$WRONG_PW" > $SIM/loginA2.json
+chk "$(cat $SIM/loginA2.json)" '{"error":"Wrong password"}' "A: wrong password rejected"
 has "$(cat $SIM/bootA.log)" "first boot" "A: repo db seed triggered"
 has "$(cat $SIM/bootA.log)" "database schema verified" "A: schema verified by ensure-db"
 LOC=$(DATABASE_URL=file:$SIM/volA/panel.db node -e "const{PrismaClient}=require('$SIM/app/node_modules/@prisma/client');const p=new PrismaClient();p.node.findFirst().then(n=>{console.log(n?n.location:'no-node');return p.\$disconnect()}).catch(e=>console.log('ERR'))")
@@ -68,8 +70,8 @@ NODE_DIR=$(dirname "$(which node)")
 PID_B=$!
 wait_up 8086; chk "$?" "0" "B1: server healthy despite broken CLI"
 has "$(cat $SIM/bootB.log)" "first boot" "B1: repo db seed triggered on empty volume"
-login 8086 "$REAL_PW" > $SIM/loginB.json
-chk "$(cat $SIM/loginB.json)" '{"ok":true}' "B1: login with the real admin password -> ok"
+login 8086 "$DEFAULT_PW" > $SIM/loginB.json
+chk "$(cat $SIM/loginB.json)" '{"ok":true}' "B1: login admin123 (default) -> ok"
 kill $PID_B 2>/dev/null; sleep 1
 
 say "B2. garbage (non-empty) panel.db + BROKEN CLI — template fallback path"
@@ -97,8 +99,8 @@ mkdir -p $SIM/volD $SIM/volD2
   sh scripts/boot.sh > $SIM/bootD1.log 2>&1 ) &
 PID_D1=$!
 wait_up 8087; chk "$?" "0" "D1: server healthy with invalid DATABASE_URL=data/"
-login 8087 "$REAL_PW" > $SIM/loginD1.json
-chk "$(cat $SIM/loginD1.json)" '{"ok":true}' "D1: login with the real admin password -> ok"
+login 8087 "$DEFAULT_PW" > $SIM/loginD1.json
+chk "$(cat $SIM/loginD1.json)" '{"ok":true}' "D1: login admin123 (default) -> ok"
 has "$(cat $SIM/bootD1.log)" "must start with 'file:'" "D1: loud warning printed"
 kill $PID_D1 2>/dev/null; sleep 1
 # D2: file: URL pointing at a directory — must gain /panel.db
@@ -106,8 +108,8 @@ kill $PID_D1 2>/dev/null; sleep 1
   sh scripts/boot.sh > $SIM/bootD2.log 2>&1 ) &
 PID_D2=$!
 wait_up 8088; chk "$?" "0" "D2: server healthy with DATABASE_URL=file:<dir>"
-login 8088 "$REAL_PW" > $SIM/loginD2.json
-chk "$(cat $SIM/loginD2.json)" '{"ok":true}' "D2: login with the real admin password -> ok"
+login 8088 "$DEFAULT_PW" > $SIM/loginD2.json
+chk "$(cat $SIM/loginD2.json)" '{"ok":true}' "D2: login admin123 (default) -> ok"
 has "$(cat $SIM/bootD2.log)" "points at a directory" "D2: directory note printed"
 [ -f $SIM/volD2/panel.db ] && { echo "PASS: D2: db file created inside dir"; PASS=$((PASS+1)); } || { echo "FAIL: D2: no db file in dir"; FAIL=$((FAIL+1)); }
 kill $PID_D2 2>/dev/null; sleep 1

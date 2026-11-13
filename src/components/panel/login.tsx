@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Eye, EyeOff, Loader2, LockKeyhole } from 'lucide-react'
+import { Eye, EyeOff, KeyRound, Loader2, LockKeyhole } from 'lucide-react'
 import { toast } from 'sonner'
 import { api, ApiError } from './api'
 import { useLang } from '@/lib/i18n'
@@ -26,6 +26,11 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
   const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const { t } = useLang()
+
+  const fillDefaultPassword = () => {
+    setPassword('admin123')
+    setShowPw(true) // reveal what was typed — no guesswork
+  }
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -102,6 +107,17 @@ export function Login({ onSuccess }: { onSuccess: () => void }) {
               {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : <LockKeyhole className="h-4 w-4" />}
               {loading ? t('Signing in…') : t('Sign in')}
             </Button>
+            <button
+              type="button"
+              onClick={fillDefaultPassword}
+              className="group mx-auto flex w-fit items-center gap-1.5 rounded-full border border-border/60 bg-muted/30 px-3 py-1.5 text-xs text-muted-foreground transition-colors hover:border-odyssey-cyan/40 hover:text-foreground"
+            >
+              <KeyRound className="h-3.5 w-3.5" />
+              <span>{t('Use default password')}:</span>
+              <code dir="ltr" className="font-mono font-semibold text-foreground/80 transition-colors group-hover:text-foreground">
+                admin123
+              </code>
+            </button>
             <p className="text-center text-xs leading-relaxed text-muted-foreground">
               {t('If it keeps failing, check the keyboard layout (EN) or Caps Lock — tap the eye to see what you typed.')}
             </p>
