@@ -42,7 +42,7 @@ import { api, useApi } from '../api'
 import { bytesToGb, daysLeft, formatBytes, formatDate, trafficState } from '@/lib/format'
 import { useLang } from '@/lib/i18n'
 import { toast } from 'sonner'
-import { buildShareLink, buildDeepLinks, buildTelegramTapLink } from '@/lib/links'
+import { buildShareLink, buildDeepLinks, buildTelegramTapLink, addressKind } from '@/lib/links'
 import { runDeviceTest, type TunnelTestResult } from '@/lib/selftest'
 import { ISP_PRESETS, ispFragment } from '@/lib/isps'
 import {
@@ -100,6 +100,16 @@ type ClientRow = {
 
 const PROTOCOLS = ['vless', 'vmess', 'trojan', 'shadowsocks', 'hysteria2', 'tuic', 'mtproto'] as const
 const TRANSPORTS = ['ws', 'grpc', 'tcp'] as const
+
+function isValidServerHost(value: string): boolean {
+  const host = value.trim().replace(/^\\[|\\]$/g, '')
+  if (!host) return false
+  if (/^\\d{1,3}(\\.\\d{1,3}){3}$/.test(host)) return host.split('.').every((part) => Number(part) >= 0 && Number(part) <= 255)
+  if (host.includes(':')) {
+    try { new URL(`http://[${host}]/`); return true } catch { return false }
+  }
+  return host.length <= 253 && /^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/.test(host)
+}
 /** Protocols with xray-style stream fields (transport/path/host/TLS switch). */
 const STREAM_PROTOS = new Set(['vless', 'vmess', 'trojan', 'shadowsocks'])
 /** Fragment only applies to URL-style TLS links (vless/trojan). */
@@ -573,6 +583,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
     // needs zero extra input; for other sources an address must be present.
     const fields = backendSubmitFields(backendMode, pickedWorker, { address, port, sni, host, path, transport, tls })
     const withProxy = withAccount && (usePicker ? backendMode === 'builtin' || Boolean(fields.address) : Boolean(fields.address))
+    if (withAccount && (backendMode === 'own' || !usePicker) && !isValidServerHost(fields.address)) {
+      toast.error(t('Enter a valid IPv4, IPv6 or domain address'))
+      return
+    }
     const skippedProxy = withAccount && !withProxy
     if (withProxy && usePicker && backendMode === 'worker' && !pickedWorker) {
       toast.error(t('Pick a worker first (or register one in Nodes & workers)'))
@@ -795,8 +809,11 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                               toast.success(t('Pasted URL detected — fields were filled automatically'))
                             }
                           }}
-                          placeholder="vps.example.com یا 2001:db8::1 یا https://foo.workers.dev"
+                          placeholder="203.0.113.10 · 2001:db8::1 · vpn.example.com"
+                          dir="ltr"
+                          inputMode="url"
                         />
+                        <p className="text-[10px] text-muted-foreground" dir="rtl">{t("Supported: IPv4, IPv6 and domain names")} · {addressKind(address) === "ipv4" ? "IPv4" : addressKind(address) === "ipv6" ? "IPv6" : addressKind(address) === "domain" ? t("Domain") : t("Waiting for address")}</p>
                       </div>
                       <div className="space-y-1.5">
                         <Label>{t('Port *')}</Label>
