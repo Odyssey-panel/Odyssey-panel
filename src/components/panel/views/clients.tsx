@@ -873,26 +873,47 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                   </>
                 )}
                 <div className="rounded-xl border bg-background/45 p-3 space-y-2">
-                  <div className="text-xs font-semibold">{t('IP and domain providers')}</div>
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="text-xs font-semibold">{t('VPS providers')}</div>
+                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">{t('Free options first')}</span>
+                  </div>
                   <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    {t('Use an address assigned to your own VPS. IPv4, IPv6 and domain names are accepted. A domain must have an A record for IPv4 or AAAA record for IPv6 pointing to the same server.')}
+                    {t('Choose a provider to create your own VPS, then enter its assigned public IP or domain above. These links do not automatically create servers or supply shared IP addresses.')}
                   </p>
                   <div className="grid gap-2 sm:grid-cols-2">
+                    <a href="https://cloud.oracle.com/" target="_blank" rel="noreferrer" className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-2.5 hover:border-emerald-500">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-xs font-semibold">Oracle Cloud</div>
+                        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">{t('Default · Always Free')}</span>
+                      </div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">Ampere A1: up to 2 OCPU / 12 GB RAM within free limits; capacity constrained</div>
+                    </a>
+                    <a href="https://cloud.google.com/free" target="_blank" rel="noreferrer" className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-2.5 hover:border-emerald-500">
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="text-xs font-semibold">Google Cloud</div>
+                        <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-300">{t('Always Free')}</span>
+                      </div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">One e2-micro in selected US regions; very limited outbound traffic</div>
+                    </a>
+                    <a href="https://www.kamatera.com/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
+                      <div className="text-xs font-semibold">Kamatera</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">Trial credit only · not permanently free</div>
+                    </a>
                     <a href="https://www.hetzner.com/cloud/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
                       <div className="text-xs font-semibold">Hetzner Cloud</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">IPv4 / IPv6 · static primary IP options</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">Paid VPS · IPv4 / IPv6</div>
                     </a>
                     <a href="https://www.digitalocean.com/products/droplets" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
                       <div className="text-xs font-semibold">DigitalOcean</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">IPv4 / IPv6 · reserved IP options</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">Paid VPS · IPv4 / IPv6 options</div>
                     </a>
                     <a href="https://www.vultr.com/products/cloud-compute/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
                       <div className="text-xs font-semibold">Vultr</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">Public IPv4 · IPv6 support · firewall</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">Paid VPS · public IPv4 / IPv6 support</div>
                     </a>
                     <a href="https://www.ovhcloud.com/en/vps/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
-                      <div className="text-xs font-semibold">OVHcloud VPS</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">IPv4 + IPv6 included on VPS plans</div>
+                      <div className="text-xs font-semibold">OVHcloud</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">Paid VPS · IPv4 + IPv6 options</div>
                     </a>
                     <a href="https://www.cloudflare.com/products/registrar/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60 sm:col-span-2">
                       <div className="text-xs font-semibold">Cloudflare DNS</div>
@@ -900,9 +921,8 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                     </a>
                   </div>
                   <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-400">
-                    {t('Provider links are purchase and documentation options, not free IP pools. No provider can guarantee that every IP works on every Iranian ISP. Open the selected TCP/UDP port in both the VPS firewall and provider firewall.')}
-                  </p>
-                </div>
+                    {t('Free Tier eligibility, regions, billing verification and capacity limits apply. No provider guarantees reachability on every Iranian ISP. Open the selected TCP/UDP port in both the VPS firewall and provider firewall.')}
+                  </p>                </div>
                 {isMtprotoC && (
                   <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('MTProto: address = server IP, port = proxy port — the secret is generated automatically. Users open the link in Telegram.')}</p>
                 )}
