@@ -26,6 +26,7 @@ import {
   Sun,
   Languages,
   Check,
+  Send,
 } from 'lucide-react'
 import { api } from './api'
 import { useLang, type Lang } from '@/lib/i18n'
@@ -36,8 +37,9 @@ import { NodesView } from './views/nodes'
 import { ScannerView } from './views/scanner'
 import { AntiFilterView } from './views/antifilter'
 import { SettingsView } from './views/settings'
+import { TelegramProxyView } from './views/telegram-proxy'
 
-export type ViewKey = 'dashboard' | 'clients' | 'antifilter' | 'nodes' | 'scanner' | 'settings'
+export type ViewKey = 'dashboard' | 'clients' | 'antifilter' | 'nodes' | 'scanner' | 'telegram' | 'settings'
 
 export const NAV_ITEMS: {
   key: ViewKey
@@ -51,6 +53,7 @@ export const NAV_ITEMS: {
   { key: 'antifilter', label: 'Anti-filter', shortLabel: 'Anti-filter (short)', icon: Shield },
   { key: 'nodes', label: 'Nodes & Workers', shortLabel: 'Nodes', icon: Server },
   { key: 'scanner', label: 'Scanner', shortLabel: 'Scanner', icon: Radar },
+  { key: 'telegram', label: 'Telegram MTProto', shortLabel: 'Telegram', icon: Send },
   { key: 'settings', label: 'Settings', shortLabel: 'Settings', icon: SettingsIcon },
 ]
 
@@ -162,6 +165,8 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
         return <NodesView />
       case 'scanner':
         return <ScannerView />
+      case 'telegram':
+        return <TelegramProxyView />
       case 'settings':
         return <SettingsView />
     }
@@ -223,7 +228,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
           className="glass fixed inset-x-0 bottom-0 z-40 border-t bg-background/80 pb-[max(env(safe-area-inset-bottom),0.4rem)] pt-1.5 backdrop-blur-xl"
           aria-label="Mobile navigation"
         >
-          <div className="mx-auto grid max-w-md grid-cols-6">
+          <div className="mx-auto grid max-w-lg grid-cols-7">
             {NAV_ITEMS.map((item) => {
               const active = view === item.key
               return (
