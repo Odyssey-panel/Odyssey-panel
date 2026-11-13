@@ -175,7 +175,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
   const content = (
     <>
       {[...mountedViews].map((key) => (
-        <div key={key} className={view === key ? 'block' : 'hidden'} aria-hidden={view !== key}>
+        <div key={key} className={view === key ? 'block odyssey-view-enter' : 'hidden'} aria-hidden={view !== key}>
           {renderView(key)}
         </div>
       ))}
@@ -189,7 +189,7 @@ export function Panel({ initialView }: { initialView?: ViewKey }) {
     return (
       <div className="flex min-h-screen flex-col">
         {/* Mobile top bar */}
-        <header className="glass sticky top-2 z-40 mx-3 flex items-center justify-between gap-2 rounded-[1.5rem] border px-4 py-3 shadow-[0_14px_40px_-24px_oklch(0_0_0/0.72)]">
+        <header className="glass odyssey-mobile-header sticky top-2 z-40 mx-3 flex items-center justify-between gap-2 rounded-[1.65rem] border px-4 py-3 shadow-[0_14px_40px_-24px_oklch(0_0_0/0.72)]">
           <Logo compact />
           <div className="flex items-center gap-1.5">
             <LanguageSwitcher />
