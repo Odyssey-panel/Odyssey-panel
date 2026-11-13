@@ -542,6 +542,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const [protocol, setProtocol] = useState<string>('vless')
   const [fragmentOn, setFragmentOn] = useState(true)
   const [fragment, setFragment] = useState('100-200,20-30,tlshello')
+  const [selectedFragmentPreset, setSelectedFragmentPreset] = useState<string | null>(null)
   const [backendMode, setBackendMode] = useState<BackendMode>('builtin')
   const [workerId, setWorkerId] = useState('')
   const { data: workersData } = useApi<{ workers: WorkerRow[] }>(open ? '/api/admin/workers' : null)
@@ -666,10 +667,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                 <span className="flex h-5 w-5 items-center justify-center rounded-full bg-odyssey-navy/10 text-[10px] font-bold text-odyssey-deep dark:bg-odyssey-cyan/15 dark:text-odyssey-bright">2</span>
                 <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t('Config')}</span>
               </div>
-              <label className="flex cursor-pointer items-center gap-2 text-xs font-medium">
-                {t('Generate config now')}
-                <Switch checked={withAccount} onCheckedChange={setWithAccount} aria-label={t('Generate config now')} />
-              </label>
+              <div className="flex items-center gap-2 text-xs font-medium">
+                <span>{t('Generate config now')}</span>
+                <Switch dir="ltr" checked={withAccount} onCheckedChange={setWithAccount} aria-label={t('Generate config now')} />
+              </div>
             </div>
 
             {withAccount && (
@@ -706,8 +707,12 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                               key={isp.id}
                               type="button"
                               title={isp.note}
-                              onClick={() => setFragment(ispFragment(isp))}
-                              className="rounded-full border bg-white/[0.03] px-2 py-0.5 text-[11px] transition-all hover:-translate-y-0.5 hover:border-odyssey-cyan/40 hover:bg-odyssey-cyan/10 dark:bg-white/[0.04]"
+                              onClick={() => {
+                                setFragment(ispFragment(isp))
+                                setSelectedFragmentPreset(isp.id)
+                              }}
+                              aria-pressed={selectedFragmentPreset === isp.id}
+                              className={selectedFragmentPreset === isp.id ? "rounded-full border border-sky-400 bg-sky-500 px-3 py-1.5 text-[11px] font-semibold text-white shadow-lg shadow-sky-500/25" : "rounded-full border border-border/70 bg-background/60 px-3 py-1.5 text-[11px] font-medium text-muted-foreground transition-all hover:border-sky-400/60 hover:bg-sky-400/10 hover:text-foreground"}
                             >
                               {isp.name}
                             </button>
@@ -715,7 +720,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                         </div>
                         <Input
                           value={fragment}
-                          onChange={(e) => setFragment(e.target.value)}
+                          onChange={(e) => {
+                            setFragment(e.target.value)
+                            setSelectedFragmentPreset(null)
+                          }}
                           placeholder="100-200,20-30,tlshello"
                           dir="ltr"
                           className="font-mono text-xs"
@@ -739,6 +747,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                             ? 'border-cyan-400/40 bg-cyan-400/10 text-foreground'
                             : 'border-border/60 text-muted-foreground hover:bg-white/[0.04]'
                         }`}
+                        aria-pressed={protocol === p}
                       >
                         {p}
                       </button>
