@@ -587,6 +587,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
       toast.error(t('Enter a valid IPv4, IPv6 or domain address'))
       return
     }
+    if (withAccount && (!Number.isInteger(Number(port)) || Number(port) < 1 || Number(port) > 65535)) {
+      toast.error(t('Enter a valid port between 1 and 65535'))
+      return
+    }
     const skippedProxy = withAccount && !withProxy
     if (withProxy && usePicker && backendMode === 'worker' && !pickedWorker) {
       toast.error(t('Pick a worker first (or register one in Nodes & workers)'))
