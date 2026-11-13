@@ -817,7 +817,18 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                       </div>
                       <div className="space-y-1.5">
                         <Label>{t('Port *')}</Label>
-                        <Input type="number" value={port} onChange={(e) => setPort(e.target.value)} />
+                        <Input type="number" min="1" max="65535" value={port} onChange={(e) => setPort(e.target.value)} dir="ltr" />
+                        <div className="flex flex-wrap gap-1">
+                          {[443, 8443, 2053, 2083, 2087, 2096, 80, 8080, 8880, 9443].map((p) => (
+                            <button key={p} type="button" onClick={() => setPort(String(p))}
+                              aria-pressed={port === String(p)}
+                              className={port === String(p)
+                                ? 'rounded-md border border-sky-400 bg-sky-500 px-2 py-1 text-[10px] font-semibold text-white'
+                                : 'rounded-md border border-border/70 bg-background/60 px-2 py-1 text-[10px] text-muted-foreground hover:border-sky-400/60 hover:text-foreground'}>
+                              {p}
+                            </button>
+                          ))}
+                        </div>
                       </div>
                     </div>
                     <div className="grid gap-3 sm:grid-cols-3">
@@ -857,6 +868,37 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                     )}
                   </>
                 )}
+                <div className="rounded-xl border bg-background/45 p-3 space-y-2">
+                  <div className="text-xs font-semibold">{t('IP and domain providers')}</div>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">
+                    {t('Use an address assigned to your own VPS. IPv4, IPv6 and domain names are accepted. A domain must have an A record for IPv4 or AAAA record for IPv6 pointing to the same server.')}
+                  </p>
+                  <div className="grid gap-2 sm:grid-cols-2">
+                    <a href="https://www.hetzner.com/cloud/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
+                      <div className="text-xs font-semibold">Hetzner Cloud</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">IPv4 / IPv6 · static primary IP options</div>
+                    </a>
+                    <a href="https://www.digitalocean.com/products/droplets" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
+                      <div className="text-xs font-semibold">DigitalOcean</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">IPv4 / IPv6 · reserved IP options</div>
+                    </a>
+                    <a href="https://www.vultr.com/products/cloud-compute/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
+                      <div className="text-xs font-semibold">Vultr</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">Public IPv4 · IPv6 support · firewall</div>
+                    </a>
+                    <a href="https://www.ovhcloud.com/en/vps/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
+                      <div className="text-xs font-semibold">OVHcloud VPS</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">IPv4 + IPv6 included on VPS plans</div>
+                    </a>
+                    <a href="https://www.cloudflare.com/products/registrar/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60 sm:col-span-2">
+                      <div className="text-xs font-semibold">Cloudflare DNS</div>
+                      <div className="mt-1 text-[10px] text-muted-foreground">Manage your own domain's A / AAAA records</div>
+                    </a>
+                  </div>
+                  <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-400">
+                    {t('Provider links are purchase and documentation options, not free IP pools. No provider can guarantee that every IP works on every Iranian ISP. Open the selected TCP/UDP port in both the VPS firewall and provider firewall.')}
+                  </p>
+                </div>
                 {isMtprotoC && (
                   <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('MTProto: address = server IP, port = proxy port — the secret is generated automatically. Users open the link in Telegram.')}</p>
                 )}
