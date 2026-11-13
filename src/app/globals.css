@@ -464,3 +464,66 @@ body {
 code {
   overflow-wrap: anywhere;
 }
+
+
+/* ── Odyssey V18: unified soft / frosted glass system ───────────────────── */
+:root {
+  --odyssey-glass-blur: 22px;
+  --odyssey-glass-radius: 1.35rem;
+  --odyssey-glass-fill: oklch(0.18 0.025 248 / 0.70);
+  --odyssey-glass-line: oklch(0.88 0.045 218 / 0.14);
+}
+.dark body {
+  background-color: oklch(0.145 0.022 248);
+}
+.glass,
+.liquid-glass-nav,
+[role="dialog"],
+[data-radix-popper-content-wrapper] [data-radix-menu-content],
+[data-slot="popover-content"],
+[data-slot="select-content"] {
+  background-color: var(--odyssey-glass-fill);
+  background-image: linear-gradient(145deg, oklch(1 0 0 / 0.075), oklch(1 0 0 / 0.018) 48%, oklch(0.72 0.1 214 / 0.035));
+  border: 1px solid var(--odyssey-glass-line);
+  box-shadow: 0 16px 44px -28px oklch(0 0 0 / 0.72), inset 0 1px 0 oklch(1 0 0 / 0.10);
+  -webkit-backdrop-filter: blur(var(--odyssey-glass-blur)) saturate(1.35);
+  backdrop-filter: blur(var(--odyssey-glass-blur)) saturate(1.35);
+}
+:root:not(.dark) .glass,
+:root:not(.dark) .liquid-glass-nav,
+:root:not(.dark) [role="dialog"],
+:root:not(.dark) [data-radix-popper-content-wrapper] [data-radix-menu-content],
+:root:not(.dark) [data-slot="popover-content"],
+:root:not(.dark) [data-slot="select-content"] {
+  --odyssey-glass-fill: oklch(0.98 0.008 230 / 0.76);
+  --odyssey-glass-line: oklch(0.42 0.045 245 / 0.12);
+  box-shadow: 0 16px 44px -28px oklch(0.25 0.04 245 / 0.28), inset 0 1px 0 oklch(1 0 0 / 0.82);
+}
+.glass-card,
+[data-slot="card"] {
+  border-color: color-mix(in oklab, var(--border) 65%, transparent);
+  box-shadow: 0 14px 42px -30px oklch(0 0 0 / 0.62), inset 0 1px 0 oklch(1 0 0 / 0.075);
+}
+input:not([type="checkbox"]):not([type="radio"]),
+textarea,
+select {
+  background-color: color-mix(in oklab, var(--card) 74%, transparent);
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+}
+button, [role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+:focus-visible {
+  outline: 2px solid oklch(0.76 0.12 215 / 0.82);
+  outline-offset: 2px;
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass, .liquid-glass-nav, [role="dialog"],
+  [data-radix-popper-content-wrapper] [data-radix-menu-content],
+  [data-slot="popover-content"], [data-slot="select-content"] {
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    background-color: var(--card);
+  }
+}
