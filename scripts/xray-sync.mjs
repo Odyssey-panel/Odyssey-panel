@@ -14,7 +14,7 @@
  * vless proxy row in the DB, so a generated config "just works".
  */
 import { PrismaClient } from '@prisma/client'
-import { existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
+import { chmodSync, existsSync, mkdirSync, openSync, readFileSync, rmSync, writeFileSync } from 'node:fs'
 import { spawn, execSync } from 'node:child_process'
 import path from 'node:path'
 
@@ -48,11 +48,11 @@ function buildConfig(proxies) {
           decryption: 'none',
         },
         streamSettings: {
+          sockopt: { tcpFastOpen: true },
           network: 'ws',
           security: 'none',
           wsSettings: { path: WS_PATH, headers: {} },
         },
-        sniffing: { enabled: true, destOverride: ['http', 'tls', 'quic'] },
       },
     ],
     outbounds: [
@@ -104,20 +104,23 @@ function start(configPath) {
     log(`xray binary not found at ${BIN} — built-in backend disabled`)
     return false
   }
-  const out = openSync(path.join(WORK, 'xray.log'), 'a')
+  const out = openSync(path.join(WORK, 'xray.log'), 'a', 0o600)
   const child = spawn(BIN, ['run', '-c', configPath], {
     detached: true,
     stdio: ['ignore', out, out],
     cwd: WORK,
   })
   child.unref()
-  writeFileSync(path.join(WORK, 'xray.pid'), String(child.pid))
+  writeFileSync(path.join(WORK, 'xray.pid'), String(child.pid), { mode: 0o600 })
   log(`started xray (pid ${child.pid}) on 127.0.0.1:${PORT}${WS_PATH}`)
   return true
 }
 
 async function main() {
-  mkdirSync(WORK, { recursive: true })
+  mkdirSync(WORK, { recursive: true, mode: 0o700 })
+  // This file contains every subscriber UUID. Keep credentials private even
+  // if the container later gains additional unprivileged processes.
+  try { chmodSync(WORK, 0o700) } catch {}
 
   const proxies = await db.proxy.findMany({
     where: { protocol: 'vless' },
@@ -125,7 +128,7 @@ async function main() {
   })
   const config = buildConfig(proxies)
   const configPath = path.join(WORK, 'config.json')
-  writeFileSync(configPath, JSON.stringify(config, null, 2))
+  writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 })
   log(`config written — ${proxies.length} vless client(s)`)
 
   const onlyConfig = process.argv.includes('--config-only')
