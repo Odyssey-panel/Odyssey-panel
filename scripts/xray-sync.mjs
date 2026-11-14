@@ -104,14 +104,18 @@ function start(configPath) {
     log(`xray binary not found at ${BIN} — built-in backend disabled`)
     return false
   }
-  const out = openSync(path.join(WORK, 'xray.log'), 'a', 0o600)
+  const logPath = path.join(WORK, 'xray.log')
+  const out = openSync(logPath, 'a', 0o600)
+  try { chmodSync(logPath, 0o600) } catch {}
   const child = spawn(BIN, ['run', '-c', configPath], {
     detached: true,
     stdio: ['ignore', out, out],
     cwd: WORK,
   })
   child.unref()
-  writeFileSync(path.join(WORK, 'xray.pid'), String(child.pid), { mode: 0o600 })
+  const pidPath = path.join(WORK, 'xray.pid')
+  writeFileSync(pidPath, String(child.pid), { mode: 0o600 })
+  try { chmodSync(pidPath, 0o600) } catch {}
   log(`started xray (pid ${child.pid}) on 127.0.0.1:${PORT}${WS_PATH}`)
   return true
 }
@@ -129,6 +133,7 @@ async function main() {
   const config = buildConfig(proxies)
   const configPath = path.join(WORK, 'config.json')
   writeFileSync(configPath, JSON.stringify(config, null, 2), { mode: 0o600 })
+  try { chmodSync(configPath, 0o600) } catch {}
   log(`config written — ${proxies.length} vless client(s)`)
 
   const onlyConfig = process.argv.includes('--config-only')
