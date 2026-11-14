@@ -14,11 +14,11 @@ export function generateSecret(protocol: string): string {
     case 'vmess':
       return crypto.randomUUID()
     case 'tuic':
-      return `${crypto.randomUUID()}:${randomBytes(8).toString('base64url')}`
+      return `${crypto.randomUUID()}:${randomBytes(32).toString('base64url')}`
     case 'mtproto':
       return `dd${randomBytes(16).toString('hex')}`
     default:
-      return randomBytes(16).toString('base64url')
+      return randomBytes(32).toString('base64url')
   }
 }
 
