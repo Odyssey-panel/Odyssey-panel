@@ -206,6 +206,7 @@ export function buildServerConfig(p: ProxyLike) {
     }
     if (p.tls && p.sni) {
       streamSettings.tlsSettings = {
+        minVersion: '1.2',
         serverName: p.sni,
         certificates: [
           {
