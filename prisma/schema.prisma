@@ -18,6 +18,7 @@ model Client {
   // null = never expires
   expiresAt DateTime?
   status    String   @default("active") // active | disabled
+  maxConnections Int @default(1)
   subToken  String   @unique
   proxies   Proxy[]
   createdAt DateTime @default(now())
