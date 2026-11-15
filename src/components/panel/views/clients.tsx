@@ -143,25 +143,27 @@ function measureWebSocketLatency(url: string, timeoutMs = 5000): Promise<number>
       try { socket?.close() } catch {}
       reject(new Error('WebSocket handshake timed out'))
     }, timeoutMs)
+    let ws: WebSocket
     try {
-      socket = new WebSocket(url)
+      ws = new WebSocket(url)
+      socket = ws
     } catch (error) {
       window.clearTimeout(timer)
       reject(error instanceof Error ? error : new Error('WebSocket test failed'))
       return
     }
-    socket.onopen = () => {
+    ws.onopen = () => {
       opened = true
       window.clearTimeout(timer)
       const elapsed = Math.round(performance.now() - started)
-      socket.close(1000, 'latency test complete')
+      ws.close(1000, 'latency test complete')
       resolve(elapsed)
     }
-    socket.onerror = () => {
+    ws.onerror = () => {
       window.clearTimeout(timer)
       if (!opened) reject(new Error('WebSocket connection failed'))
     }
-    socket.onclose = () => {
+    ws.onclose = () => {
       window.clearTimeout(timer)
       if (!opened) reject(new Error('WebSocket closed before handshake'))
     }
