@@ -94,6 +94,7 @@ type ClientRow = {
   expiresAt: string | null
   status: string
   subToken: string
+  maxConnections: number
   createdAt: string
   proxies: ProxyRow[]
 }
