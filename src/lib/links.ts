@@ -95,8 +95,8 @@ export function isValidFragment(v: string): boolean {
 export function isValidEchConfig(v: string): boolean {
   const s = (v || '').trim()
   if (!s) return true
-  if (s.length > 8192 || /[\\u0000-\\u0020]/.test(s)) return false
-  return /^[A-Za-z0-9+/=_-]+$/.test(s) || /^(?:[A-Za-z0-9.-]+\\+)?(?:udp|https|h2c):\\/\\/[^\\s]+$/i.test(s)
+  if (s.length > 8192 || /[\u0000-\u0020]/.test(s)) return false
+  return /^[A-Za-z0-9+/=_-]+$/.test(s) || /^(?:[A-Za-z0-9.-]+\+)?(?:udp|https|h2c):\/\/[^\s]+$/i.test(s)
 }
 
 /** Deep links that open the user's VPN app and import the subscription in one tap. */
