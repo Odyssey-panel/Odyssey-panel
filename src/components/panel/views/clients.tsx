@@ -1456,7 +1456,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
       })
       toast.success(t('Account generated'))
       setOpen(false)
-      setAddress(''); setSni(''); setPort('443'); setPath('/'); setFragment('')
+      setAddress(''); setSni(''); setPort('443'); setPath('/'); setFragment(''); setEch('')
       await onAdded()
     } catch (e) {
       toast.error(e instanceof Error ? e.message : t('Failed'))
@@ -1580,6 +1580,13 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
                 </>
               )}
             </div>
+            {['vless', 'trojan'].includes(protocol) && tls && (
+              <div className="space-y-1.5 rounded-lg border bg-muted/20 p-2.5">
+                <Label>{t('ECH (Encrypted Client Hello)')}</Label>
+                <Input value={ech} onChange={(e) => setEch(e.target.value)} placeholder="udp://1.1.1.1 · ECHConfigList" dir="ltr" className="font-mono text-xs" />
+                <p className="text-[10px] text-muted-foreground">{t('Optional: base64 ECHConfigList or Xray DNS resolver.')}</p>
+              </div>
+            )}
             {showStream && (
               <div className="grid grid-cols-2 gap-3">
                 <div className="space-y-1.5">
