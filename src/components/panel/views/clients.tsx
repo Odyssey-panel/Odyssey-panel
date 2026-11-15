@@ -966,7 +966,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                 )}
                 <div className="rounded-xl border border-odyssey-cyan/25 bg-odyssey-cyan/[0.04] p-3 space-y-2">
                   <div className="flex items-center justify-between gap-2"><Label>{t('ECH (Encrypted Client Hello)')}</Label><Badge variant="outline">{echStatus === 'checking' ? t('Checking DNS') : echStatus === 'found' ? t('ECH found · auto-filled') : echStatus === 'unavailable' ? t('No ECH record found') : t('Automatic')}</Badge></div>
-                  <p className="text-[11px] leading-relaxed text-muted-foreground">{echStatus === 'found' ? t('ECHConfigList was fetched automatically from the selected SNI HTTPS DNS record.') : echStatus === 'checking' ? t('Checking the selected domain for an ECH record…') : echStatus === 'unavailable' ? t('This domain does not publish an ECH record. The config will be generated without ECH to avoid breaking the connection.') : t('ECH is detected and filled automatically when the selected domain publishes an ECH record.')}</p>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">{echStatus === 'found' ? t('ECH was detected. The client will retrieve fresh ECH settings from DNS automatically.') : echStatus === 'checking' ? t('Checking the selected domain for an ECH record…') : echStatus === 'unavailable' ? t('This domain does not publish an ECH record. The config will be generated without ECH to avoid breaking the connection.') : t('ECH is detected and filled automatically when the selected domain publishes an ECH record.')}</p>
                 </div>
                 </div>}
                 {configTab === 'tools' && <div className="space-y-3.5">
@@ -1007,7 +1007,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
-          <Button onClick={submit} disabled={busy || !name.trim()}>
+          <Button onClick={submit} disabled={busy || !name.trim() || echStatus === 'checking'}>
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
             {t('Create user')}
           </Button>
@@ -1613,7 +1613,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
             {['vless', 'trojan'].includes(protocol) && tls && (
               <div className="space-y-1.5 rounded-lg border border-odyssey-cyan/25 bg-odyssey-cyan/[0.04] p-2.5">
                 <div className="flex items-center justify-between gap-2"><Label>{t('ECH (Encrypted Client Hello)')}</Label><Badge variant="outline">{echStatus === 'checking' ? t('Checking DNS') : echStatus === 'found' ? t('ECH found · auto-filled') : echStatus === 'unavailable' ? t('No ECH record found') : t('Automatic')}</Badge></div>
-                <p className="text-[10px] text-muted-foreground">{echStatus === 'found' ? t('ECHConfigList was fetched automatically from the selected SNI HTTPS DNS record.') : echStatus === 'checking' ? t('Checking the selected domain for an ECH record…') : echStatus === 'unavailable' ? t('No ECH record found; this config will be created without ECH.') : t('ECH is detected and filled automatically when available.')}</p>
+                <p className="text-[10px] text-muted-foreground">{echStatus === 'found' ? t('ECH was detected. The client will retrieve fresh ECH settings from DNS automatically.') : echStatus === 'checking' ? t('Checking the selected domain for an ECH record…') : echStatus === 'unavailable' ? t('No ECH record found; this config will be created without ECH.') : t('ECH is detected and filled automatically when available.')}</p>
               </div>
             )}
             {showStream && (
@@ -1645,7 +1645,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)}>{t('Cancel')}</Button>
-            <Button onClick={submit} disabled={busy || (usePicker ? backendMode === 'own' && !address.trim() : !address.trim())}>
+            <Button onClick={submit} disabled={busy || echStatus === 'checking' || (usePicker ? backendMode === 'own' && !address.trim() : !address.trim())}>
               {busy && <Loader2 className="h-4 w-4 animate-spin" />} {t('Generate')}
             </Button>
           </DialogFooter>
