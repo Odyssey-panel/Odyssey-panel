@@ -39,7 +39,7 @@ export async function POST(req: Request) {
       const match = record.data.match(/(?:^|\s)ech="([A-Za-z0-9+/_=-]+)"/i)
       if (match?.[1]) {
         return Response.json(
-          { echConfigList: match[1] },
+          { echConfigList: 'https://1.1.1.1/dns-query' },
           { headers: { 'Cache-Control': 'private, max-age=60' } },
         )
       }
