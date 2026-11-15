@@ -137,7 +137,7 @@ type WorkerRow = {
 function measureWebSocketLatency(url: string, timeoutMs = 5000): Promise<number> {
   return new Promise((resolve, reject) => {
     const started = performance.now()
-    let socket: WebSocket
+    let socket: WebSocket | null = null
     let opened = false
     const timer = window.setTimeout(() => {
       try { socket?.close() } catch {}
