@@ -133,6 +133,41 @@ type WorkerRow = {
   note: string | null
 }
 
+/** Measure the real WebSocket upgrade time from the current browser/device. */
+function measureWebSocketLatency(url: string, timeoutMs = 5000): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const started = performance.now()
+    let socket: WebSocket
+    let opened = false
+    const timer = window.setTimeout(() => {
+      try { socket?.close() } catch {}
+      reject(new Error('WebSocket handshake timed out'))
+    }, timeoutMs)
+    try {
+      socket = new WebSocket(url)
+    } catch (error) {
+      window.clearTimeout(timer)
+      reject(error instanceof Error ? error : new Error('WebSocket test failed'))
+      return
+    }
+    socket.onopen = () => {
+      opened = true
+      window.clearTimeout(timer)
+      const elapsed = Math.round(performance.now() - started)
+      socket.close(1000, 'latency test complete')
+      resolve(elapsed)
+    }
+    socket.onerror = () => {
+      window.clearTimeout(timer)
+      if (!opened) reject(new Error('WebSocket connection failed'))
+    }
+    socket.onclose = () => {
+      window.clearTimeout(timer)
+      if (!opened) reject(new Error('WebSocket closed before handshake'))
+    }
+  })
+}
+
 function panelOrigin(): string {
   return typeof window !== 'undefined' ? window.location.origin : ''
 }
@@ -568,7 +603,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const [busy, setBusy] = useState(false)
   const [configTab, setConfigTab] = useState<'main' | 'network' | 'tools'>('main')
   const [pingBusy, setPingBusy] = useState(false)
-  const [pingResult, setPingResult] = useState<{ latencyMs: number } | { error: string } | null>(null)
+  const [pingResult, setPingResult] = useState<{ latencyMs: number; method: 'device' | 'server' } | { error: string } | null>(null)
   const { t } = useLang()
 
   const isMtprotoC = protocol === 'mtproto'
@@ -956,19 +991,28 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                     <div className="flex items-center justify-between rounded-lg border px-3 py-2"><Label>{t('Enable proxy')}</Label><Switch checked={false} disabled aria-label={t('Enable proxy')} /></div>
                   </div>
                   <div className="rounded-xl border bg-background/50 p-3 space-y-3">
-                    <div><div className="text-sm font-semibold">{t('Connection ping test')}</div><p className="mt-1 text-[11px] text-muted-foreground">{t('Tests TCP connection time from the panel server to the selected address and port.')}</p></div>
+                    <div><div className="text-sm font-semibold">{t('Connection ping test')}</div><p className="mt-1 text-[11px] text-muted-foreground">{t('VLESS/Trojan WS measures the connection from this device. Other protocols use a TCP check from the panel server.')}</p></div>
                     <Button type="button" variant="outline" className="w-full" disabled={pingBusy || (!address.trim() && backendMode === 'own')} onClick={async () => {
                       setPingBusy(true); setPingResult(null)
                       try {
                         const target = backendSubmitFields(backendMode, pickedWorker, { address, port, sni, host, path, transport, tls })
-                        const result = await api<{ latencyMs: number }>('/api/admin/ping', { method: 'POST', body: JSON.stringify({ host: hostFromUrl(target.address), port: target.port }) })
-                        setPingResult({ latencyMs: result.latencyMs })
+                        if (tls && ['vless', 'trojan'].includes(protocol) && transport === 'ws') {
+                          const targetHost = hostFromUrl(target.address)
+                          const hostPart = targetHost.includes(':') && !targetHost.startsWith('[') ? `[${targetHost}]` : targetHost
+                          const targetPath = target.path || '/'
+                          const wsUrl = `wss://${hostPart}:${target.port}${targetPath.startsWith('/') ? targetPath : `/${targetPath}`}`
+                          const latencyMs = await measureWebSocketLatency(wsUrl)
+                          setPingResult({ latencyMs, method: 'device' })
+                        } else {
+                          const result = await api<{ latencyMs: number }>('/api/admin/ping', { method: 'POST', body: JSON.stringify({ host: hostFromUrl(target.address), port: target.port }) })
+                          setPingResult({ latencyMs: result.latencyMs, method: 'server' })
+                        }
                       } catch (error) { setPingResult({ error: error instanceof Error ? error.message : t('Ping failed') }) }
                       finally { setPingBusy(false) }
                     }}>
                       {pingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}{t('Test ping')}
                     </Button>
-                    {pingResult && ('latencyMs' in pingResult ? <p className="text-center text-sm font-semibold text-emerald-600">{pingResult.latencyMs} ms</p> : <p className="text-center text-xs text-destructive">{pingResult.error}</p>)}
+                    {pingResult && ('latencyMs' in pingResult ? <div className="text-center"><p className={`text-sm font-semibold ${pingResult.latencyMs < 300 ? 'text-emerald-600' : 'text-red-600'}`}>{pingResult.latencyMs} ms · {pingResult.latencyMs < 300 ? t('Under 300 ms') : t('Above 300 ms — too slow')}</p><p className="mt-0.5 text-[10px] text-muted-foreground">{pingResult.method === 'device' ? t('Measured from this device') : t('Measured from the panel server')}</p></div> : <p className="text-center text-xs text-destructive">{pingResult.error}</p>)}
                   </div>
                 </div>}
               </div>
