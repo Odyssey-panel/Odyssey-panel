@@ -564,6 +564,9 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const [host, setHost] = useState('')
   const [tls, setTls] = useState(true)
   const [busy, setBusy] = useState(false)
+  const [configTab, setConfigTab] = useState<'main' | 'network' | 'tools'>('main')
+  const [pingBusy, setPingBusy] = useState(false)
+  const [pingResult, setPingResult] = useState<{ latencyMs: number } | { error: string } | null>(null)
   const { t } = useLang()
 
   const isMtprotoC = protocol === 'mtproto'
@@ -693,6 +696,15 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
 
             {withAccount && (
               <div className="space-y-3.5">
+                <div className="grid grid-cols-3 gap-1 rounded-xl border bg-background/70 p-1" role="tablist" aria-label={t('Config sections')}>
+                  {([{ id: 'main', label: t('Configuration'), icon: ShieldCheck }, { id: 'network', label: t('IP & ECH'), icon: Server }, { id: 'tools', label: t('Proxy & ping'), icon: Activity }] as const).map((tab) => (
+                    <button key={tab.id} type="button" role="tab" aria-selected={configTab === tab.id} onClick={() => setConfigTab(tab.id)}
+                      className={`flex min-h-10 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-[11px] font-semibold transition-all ${configTab === tab.id ? 'bg-gradient-to-r from-odyssey-navy to-odyssey-cyan text-white shadow-md' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}>
+                      <tab.icon className="h-3.5 w-3.5" /> <span>{tab.label}</span>
+                    </button>
+                  ))}
+                </div>
+                {configTab === 'main' && <div className="space-y-3.5">
                 {/* ── Fragment — the requested one-tap anti-filter button, at the
                        top of creation, applied to THIS config only ── */}
                 {showFragmentC && (
@@ -793,6 +805,15 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                   </div>
                 )}
 
+                </div>}
+                {configTab === 'network' && <div className="space-y-3.5">
+                {backendMode === 'builtin' && usePicker && (
+                  <div className="rounded-xl border border-odyssey-cyan/30 bg-odyssey-cyan/[0.06] p-3 text-xs">
+                    <div className="font-semibold">{t('Built-in server address')}</div>
+                    <div className="mt-1 font-mono text-muted-foreground" dir="ltr">{hostFromUrl(panelOrigin())}:443</div>
+                    <p className="mt-1 text-[11px] text-muted-foreground">{t('Address, port and TLS are filled automatically by the built-in backend.')}</p>
+                  </div>
+                )}
                 {/* Manual server fields — only when the admin brings a server */}
                 {(!usePicker || backendMode === 'own') && (
                   <>
@@ -929,6 +950,34 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                 {isSingboxC && (
                   <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('Hysteria2/TUIC need a sing-box based server (Hiddify, s-ui, …); the config file has both client and server JSON.')}</p>
                 )}
+                <div className="rounded-xl border border-dashed p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2"><Label>{t('ECH (Encrypted Client Hello)')}</Label><Badge variant="outline">{t('Not enabled')}</Badge></div>
+                  <Input disabled placeholder={t('ECH config list — support not available in current config format')} dir="ltr" />
+                  <p className="text-[10px] leading-relaxed text-muted-foreground">{t('ECH is shown here but is not written into generated links yet; it will not be silently ignored.')}</p>
+                </div>
+                </div>}
+                {configTab === 'tools' && <div className="space-y-3.5">
+                  <div className="rounded-xl border border-dashed p-3 space-y-2 opacity-80">
+                    <div className="flex items-center justify-between gap-2"><div className="text-sm font-semibold">{t('Proxy on config')}</div><Badge variant="secondary">{t('Coming soon')}</Badge></div>
+                    <p className="text-xs text-muted-foreground">{t('This option is not active yet. Existing generated configurations are not affected.')}</p>
+                    <div className="flex items-center justify-between rounded-lg border px-3 py-2"><Label>{t('Enable proxy')}</Label><Switch checked={false} disabled aria-label={t('Enable proxy')} /></div>
+                  </div>
+                  <div className="rounded-xl border bg-background/50 p-3 space-y-3">
+                    <div><div className="text-sm font-semibold">{t('Connection ping test')}</div><p className="mt-1 text-[11px] text-muted-foreground">{t('Tests TCP connection time from the panel server to the selected address and port.')}</p></div>
+                    <Button type="button" variant="outline" className="w-full" disabled={pingBusy || (!address.trim() && backendMode === 'own')} onClick={async () => {
+                      setPingBusy(true); setPingResult(null)
+                      try {
+                        const target = backendSubmitFields(backendMode, pickedWorker, { address, port, sni, host, path, transport, tls })
+                        const result = await api<{ latencyMs: number }>('/api/admin/ping', { method: 'POST', body: JSON.stringify({ host: hostFromUrl(target.address), port: target.port }) })
+                        setPingResult({ latencyMs: result.latencyMs })
+                      } catch (error) { setPingResult({ error: error instanceof Error ? error.message : t('Ping failed') }) }
+                      finally { setPingBusy(false) }
+                    }}>
+                      {pingBusy ? <Loader2 className="h-4 w-4 animate-spin" /> : <Activity className="h-4 w-4" />}{t('Test ping')}
+                    </Button>
+                    {pingResult && ('latencyMs' in pingResult ? <p className="text-center text-sm font-semibold text-emerald-600">{pingResult.latencyMs} ms</p> : <p className="text-center text-xs text-destructive">{pingResult.error}</p>)}
+                  </div>
+                </div>}
               </div>
             )}
           </section>
