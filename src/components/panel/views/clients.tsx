@@ -303,6 +303,7 @@ export function ClientsView() {
   const { data, loading, reload } = useApi<{ clients: ClientRow[] }>('/api/admin/clients')
   const [search, setSearch] = useState('')
   const [createOpen, setCreateOpen] = useState(false)
+  const [easyOpen, setEasyOpen] = useState(false)
   const [detail, setDetail] = useState<ClientRow | null>(null)
   const [edit, setEdit] = useState<ClientRow | null>(null)
   const [deleteTarget, setDeleteTarget] = useState<ClientRow | null>(null)
@@ -346,6 +347,9 @@ export function ClientsView() {
         <div className="flex gap-2">
           <Button variant="outline" size="sm" onClick={() => void reload()}>
             <RefreshCw className="h-4 w-4" /> <span className="sr-only sm:inline">{t('Refresh')}</span>
+          </Button>
+          <Button size="sm" variant="outline" onClick={() => setEasyOpen(true)}>
+            <Zap className="h-4 w-4" /> {t('Easy create')}
           </Button>
           <Button size="sm" onClick={() => setCreateOpen(true)}>
             <Plus className="h-4 w-4" /> {t('New user')}
@@ -469,6 +473,15 @@ export function ClientsView() {
           })}
         </div>
       )}
+
+      <EasyCreateDialog
+        open={easyOpen}
+        onOpenChange={setEasyOpen}
+        onDone={async () => {
+          setEasyOpen(false)
+          await reload()
+        }}
+      />
 
       <CreateClientDialog
         open={createOpen}
@@ -939,6 +952,115 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
           <Button onClick={submit} disabled={busy || !name.trim()}>
             {busy && <Loader2 className="h-4 w-4 animate-spin" />}
             {t('Create user')}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Easy create — one VLESS account with an operator-aware Fragment preset.
+// ---------------------------------------------------------------------------
+
+function EasyCreateDialog({ open, onOpenChange, onDone }: { open: boolean; onOpenChange: (v: boolean) => void; onDone: () => void }) {
+  const [name, setName] = useState('')
+  const [operator, setOperator] = useState('all')
+  const [trafficGb, setTrafficGb] = useState('10')
+  const [days, setDays] = useState('30')
+  const [maxConnections, setMaxConnections] = useState('1')
+  const [busy, setBusy] = useState(false)
+  const { t } = useLang()
+
+  const create = async () => {
+    if (!name.trim()) return toast.error(t('Name is required'))
+    const max = Number(maxConnections)
+    if (!Number.isInteger(max) || max < 1 || max > 1000) return toast.error(t('Enter a valid connection limit'))
+    setBusy(true)
+    try {
+      const selected = ISP_PRESETS.find((p) => p.id === operator)
+      const fragment = selected ? ispFragment(selected) : '100-200,20-30,tlshello'
+      const host = window.location.hostname
+      const created = await api<{ client: ClientRow }>('/api/admin/clients', {
+        method: 'POST',
+        body: JSON.stringify({
+          name: name.trim(),
+          trafficGb: Number(trafficGb) || 0,
+          days: Number(days) || 0,
+          protocol: 'vless',
+          address: window.location.origin,
+          port: 443,
+          sni: host,
+          host,
+          transport: 'ws',
+          path: '/vlessws',
+          tls: true,
+          fragment,
+          maxConnections: max,
+        }),
+      })
+      const proxy = created.client.proxies?.[0]
+      if (proxy) {
+        const link = buildShareLink(proxy)
+        const parsed = link ? (await import('@/lib/selftest')).parseVlessUri(link) : null
+        if (parsed) {
+          const test = await runDeviceTest(parsed)
+          if (!test.ok) toast.warning(t('Account created, but this device could not verify the tunnel'))
+          else toast.success(t('Account created and tunnel verified from this device'))
+        } else toast.success(t('Account created'))
+      } else toast.success(t('Account created'))
+      setName('')
+      onDone()
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : t('Create failed'))
+    } finally {
+      setBusy(false)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2"><Zap className="h-5 w-5 text-odyssey-cyan" />{t('Easy create')}</DialogTitle>
+          <DialogDescription>{t('Create a ready-to-use VLESS account with automatic operator settings.')}</DialogDescription>
+        </DialogHeader>
+        <div className="grid gap-3">
+          <div className="space-y-1.5">
+            <Label>{t('Name *')}</Label>
+            <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="alice" autoComplete="off" />
+          </div>
+          <div className="space-y-1.5">
+            <Label>{t('Mobile operator / ISP')}</Label>
+            <Select value={operator} onValueChange={setOperator}>
+              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('All operators')}</SelectItem>
+                {ISP_PRESETS.map((isp) => <SelectItem key={isp.id} value={isp.id}>{isp.name}</SelectItem>)}
+              </SelectContent>
+            </Select>
+            <p className="text-[11px] text-muted-foreground">{t('The panel selects a compatible default automatically; actual speed varies by network.')}</p>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label>{t('Traffic limit (GB, 0 = unlimited)')}</Label>
+              <Input type="number" min="0" value={trafficGb} onChange={(e) => setTrafficGb(e.target.value)} />
+            </div>
+            <div className="space-y-1.5">
+              <Label>{t('Valid for (days, 0 = never)')}</Label>
+              <Input type="number" min="0" value={days} onChange={(e) => setDays(e.target.value)} />
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <Label>{t('Simultaneous connections')}</Label>
+            <Input type="number" min="1" max="1000" value={maxConnections} onChange={(e) => setMaxConnections(e.target.value)} />
+            <p className="text-[11px] text-amber-600 dark:text-amber-400">{t('Connection limit is recorded with the account; enforcement requires backend session tracking.')}</p>
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>{t('Cancel')}</Button>
+          <Button onClick={create} disabled={busy || !name.trim()}>
+            {busy && <Loader2 className="h-4 w-4 animate-spin" />}{t('Create')}
           </Button>
         </DialogFooter>
       </DialogContent>
