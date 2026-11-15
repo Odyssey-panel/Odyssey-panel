@@ -41,6 +41,7 @@ model Proxy {
   tls          Boolean  @default(true)
   flow         String?
   fragment     String? // TLS-fragment "<length>,<interval>,<packets>" (anti-censorship)
+  ech          String? // Xray ECHConfigList or DNS resolver specification for TLS clients
   serverConfig String? // JSON server-side inbound config for xray/sing-box
   createdAt    DateTime @default(now())
 }
