@@ -789,6 +789,27 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                     </p>
                   )}
                 </div>
+                {showStreamC && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5">
+                      <Label>{t('Transport')}</Label>
+                      <Select value={transport} onValueChange={setTransport}>
+                        <SelectTrigger aria-label={t('Transport')}><SelectValue /></SelectTrigger>
+                        <SelectContent>{TRANSPORTS.map((tr) => <SelectItem key={tr} value={tr}>{tr}</SelectItem>)}</SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-center justify-between rounded-lg border px-3 py-2">
+                      <div><Label htmlFor="c-tls" className="text-xs">{t('TLS encryption')}</Label><p className="text-[10px] text-muted-foreground">{tls ? t('Encrypted connection') : t('Unencrypted connection')}</p></div>
+                      <Switch id="c-tls" checked={tls} onCheckedChange={setTls} />
+                    </div>
+                  </div>
+                )}
+                {showStreamC && (
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="space-y-1.5"><Label>{transport === 'grpc' ? t('Service name') : t('WS path')}</Label><Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/" dir="ltr" /></div>
+                    <div className="space-y-1.5"><Label>{t('Host header')}</Label><Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t('optional')} dir="ltr" /></div>
+                  </div>
+                )}
 
                 {/* Where the config runs — always visible so the mode can be
                     switched back and forth (was locked once "own" was chosen) */}
@@ -856,41 +877,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                         </div>
                       </div>
                     </div>
-                    <div className="grid gap-3 sm:grid-cols-3">
-                      <div className="space-y-1.5">
-                        <Label>{isMtprotoC ? 'FakeTLS domain' : t('SNI / domain')}</Label>
-                        <Input value={sni} onChange={(e) => setSni(e.target.value)} placeholder={t('same as address')} />
-                      </div>
-                      {showStreamC && (
-                        <>
-                          <div className="space-y-1.5">
-                            <Label>{t('Transport')}</Label>
-                            <Select value={transport} onValueChange={setTransport}>
-                              <SelectTrigger aria-label={t('Transport')}><SelectValue /></SelectTrigger>
-                              <SelectContent>
-                                {TRANSPORTS.map((tr) => <SelectItem key={tr} value={tr}>{tr}</SelectItem>)}
-                              </SelectContent>
-                            </Select>
-                          </div>
-                          <div className="flex items-center justify-between gap-2 rounded-lg border px-3">
-                            <Label htmlFor="c-tls" className="text-xs">TLS</Label>
-                            <Switch id="c-tls" checked={tls} onCheckedChange={setTls} />
-                          </div>
-                        </>
-                      )}
+                    <div className="space-y-1.5">
+                      <Label>{isMtprotoC ? 'FakeTLS domain' : t('SNI / domain')}</Label>
+                      <Input value={sni} onChange={(e) => setSni(e.target.value)} placeholder={t('same as address')} dir="ltr" />
                     </div>
-                    {showStreamC && (
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        <div className="space-y-1.5">
-                          <Label>{transport === 'grpc' ? t('Service name') : t('WS path')}</Label>
-                          <Input value={path} onChange={(e) => setPath(e.target.value)} placeholder="/" />
-                        </div>
-                        <div className="space-y-1.5">
-                          <Label>{t('Host header')}</Label>
-                          <Input value={host} onChange={(e) => setHost(e.target.value)} placeholder={t('optional')} />
-                        </div>
-                      </div>
-                    )}
                   </>
                 )}
                 <div className="rounded-xl border bg-background/45 p-3 space-y-2">
