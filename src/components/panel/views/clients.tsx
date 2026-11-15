@@ -82,6 +82,7 @@ type ProxyRow = {
   transport: string
   tls: boolean
   fragment: string | null
+  ech: string | null
   serverConfig: string | null
 }
 
@@ -552,6 +553,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const [protocol, setProtocol] = useState<string>('vless')
   const [fragmentOn, setFragmentOn] = useState(true)
   const [fragment, setFragment] = useState('100-200,20-30,tlshello')
+  const [ech, setEch] = useState('')
   const [selectedFragmentPreset, setSelectedFragmentPreset] = useState<string | null>(null)
   const [backendMode, setBackendMode] = useState<BackendMode>('builtin')
   const [workerId, setWorkerId] = useState('')
@@ -618,6 +620,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
           tls: withProxy && !isMtprotoC && !isSingboxC ? fields.tls : true,
           // Fragment goes ONLY onto this one config, right at creation.
           fragment: withProxy && showFragmentC && fragmentOn ? fragment.trim() || undefined : undefined,
+          ech: withProxy && tls && ['vless', 'trojan'].includes(protocol) ? ech.trim() || undefined : undefined,
         }),
       })
       toast.success(
@@ -940,10 +943,10 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                 {isSingboxC && (
                   <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('Hysteria2/TUIC need a sing-box based server (Hiddify, s-ui, …); the config file has both client and server JSON.')}</p>
                 )}
-                <div className="rounded-xl border border-dashed p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2"><Label>{t('ECH (Encrypted Client Hello)')}</Label><Badge variant="outline">{t('Not enabled')}</Badge></div>
-                  <Input disabled placeholder={t('ECH config list — support not available in current config format')} dir="ltr" />
-                  <p className="text-[10px] leading-relaxed text-muted-foreground">{t('ECH is shown here but is not written into generated links yet; it will not be silently ignored.')}</p>
+                <div className="rounded-xl border border-odyssey-cyan/25 bg-odyssey-cyan/[0.04] p-3 space-y-2">
+                  <div className="flex items-center justify-between gap-2"><Label>{t('ECH (Encrypted Client Hello)')}</Label><Badge variant="outline">{['vless', 'trojan'].includes(protocol) && tls ? t('Supported') : t('Requires TLS on VLESS/Trojan')}</Badge></div>
+                  <Input value={ech} onChange={(e) => setEch(e.target.value)} disabled={!['vless', 'trojan'].includes(protocol) || !tls} placeholder="udp://1.1.1.1 · https://1.1.1.1/dns-query · ECHConfigList" dir="ltr" className="font-mono text-xs" />
+                  <p className="text-[10px] leading-relaxed text-muted-foreground">{t('Enter a base64 ECHConfigList or an Xray DNS resolver such as udp://1.1.1.1. Xray clients that support ECH will use it.')}</p>
                 </div>
                 </div>}
                 {configTab === 'tools' && <div className="space-y-3.5">
@@ -1405,6 +1408,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
   const [host, setHost] = useState('')
   const [tls, setTls] = useState(true)
   const [fragment, setFragment] = useState('')
+  const [ech, setEch] = useState('')
   const [remark, setRemark] = useState(`Odyssey-${defaultRemark}`)
   const [busy, setBusy] = useState(false)
   const { t } = useLang()
@@ -1446,6 +1450,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
           host: isMtproto || isSingboxLike ? undefined : fields.host,
           tls: isMtproto || isSingboxLike ? true : fields.tls,
           fragment: showFragment ? fragment.trim() || undefined : undefined,
+          ech: tls && ['vless', 'trojan'].includes(protocol) ? ech.trim() || undefined : undefined,
           remark: remark.trim() || undefined,
         }),
       })
