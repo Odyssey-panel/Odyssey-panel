@@ -3,7 +3,7 @@ import { requireAuth, jsonSafe } from '@/lib/auth'
 import { randomBytes } from 'node:crypto'
 import { buildServerConfig } from '@/lib/links'
 import { generateSecret, validateProtocol } from '@/lib/secrets'
-import { isValidFragment } from '@/lib/links'
+import { isValidFragment, isValidEchConfig } from '@/lib/links'
 import { normalizeProxyTarget, panelHost, syncBackend } from '@/lib/backend'
 
 export const runtime = 'nodejs'
@@ -24,6 +24,7 @@ type CreateBody = {
   path?: string
   tls?: boolean
   fragment?: string
+  ech?: string
 }
 
 export async function GET() {
@@ -74,6 +75,9 @@ export async function POST(req: Request) {
     if (body.fragment && !isValidFragment(body.fragment)) {
       return Response.json({ error: 'Invalid fragment value' }, { status: 400 })
     }
+    if (body.ech && (!body.tls || !['vless', 'trojan'].includes(body.protocol) || !isValidEchConfig(body.ech))) {
+      return Response.json({ error: 'Invalid ECH configuration for this protocol' }, { status: 400 })
+    }
     const secret = generateSecret(body.protocol)
     const norm = normalizeProxyTarget(
       {
@@ -100,6 +104,7 @@ export async function POST(req: Request) {
       transport: norm.transport ?? 'ws',
       tls: norm.tls ?? true,
       fragment: body.fragment?.trim() || null,
+      ech: body.ech?.trim() || null,
     }
     await db.proxy.create({
       data: {
@@ -115,6 +120,7 @@ export async function POST(req: Request) {
         transport: proxyLike.transport,
         tls: proxyLike.tls,
         fragment: proxyLike.fragment,
+        ech: proxyLike.ech,
         serverConfig: JSON.stringify(buildServerConfig(proxyLike)),
       },
     })
