@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -111,6 +111,40 @@ function isValidServerHost(value: string): boolean {
   }
   return host.length <= 253 && /^(?=.{1,253}$)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\\.)*[a-zA-Z0-9](?:[a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?$/.test(host)
 }
+/** Automatically fetch the target domain's published HTTPS ECHConfigList. */
+function useAutoEchConfig(enabled: boolean, address: string, sni: string, setEch: (value: string) => void) {
+  const [status, setStatus] = useState<'idle' | 'checking' | 'found' | 'unavailable'>('idle')
+  useEffect(() => {
+    if (!enabled) { setEch(''); setStatus('idle'); return }
+    const raw = sni.trim() || address.trim()
+    let domain = raw
+    try {
+      if (/^https?:\/\//i.test(raw)) domain = new URL(raw).hostname
+      else if (raw.startsWith('[')) domain = raw.slice(1, raw.indexOf(']'))
+      else domain = raw.split('/')[0].replace(/:\d+$/, '')
+    } catch { domain = '' }
+    domain = domain.replace(/\.$/, '').toLowerCase()
+    if (!domain || domain.includes(':') || !/^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?$/.test(domain)) {
+      setEch(''); setStatus('idle'); return
+    }
+    let cancelled = false
+    const timer = window.setTimeout(async () => {
+      setStatus('checking')
+      try {
+        const result = await api<{ echConfigList: string | null }>('/api/admin/ech-lookup', { method: 'POST', body: JSON.stringify({ domain }) })
+        if (cancelled) return
+        setEch(result.echConfigList || '')
+        setStatus(result.echConfigList ? 'found' : 'unavailable')
+      } catch {
+        if (cancelled) return
+        setEch(''); setStatus('unavailable')
+      }
+    }, 350)
+    return () => { cancelled = true; window.clearTimeout(timer) }
+  }, [enabled, address, sni, setEch])
+  return status
+}
+
 /** Protocols with xray-style stream fields (transport/path/host/TLS switch). */
 const STREAM_PROTOS = new Set(['vless', 'vmess', 'trojan', 'shadowsocks'])
 /** Fragment only applies to URL-style TLS links (vless/trojan). */
@@ -607,6 +641,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
   const [pingBusy, setPingBusy] = useState(false)
   const [pingResult, setPingResult] = useState<{ latencyMs: number; method: 'device' | 'server' } | { error: string } | null>(null)
   const { t } = useLang()
+  const echStatus = useAutoEchConfig(withAccount && tls && ['vless', 'trojan'].includes(protocol), backendSubmitFields(backendMode, pickedWorker, { address, port, sni, host, path, transport, tls }).address, sni, setEch)
 
   const isMtprotoC = protocol === 'mtproto'
   const isSingboxC = protocol === 'hysteria2' || protocol === 'tuic'
@@ -657,7 +692,7 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
           tls: withProxy && !isMtprotoC && !isSingboxC ? fields.tls : true,
           // Fragment goes ONLY onto this one config, right at creation.
           fragment: withProxy && showFragmentC && fragmentOn ? fragment.trim() || undefined : undefined,
-          ech: withProxy && tls && ['vless', 'trojan'].includes(protocol) ? ech.trim() || undefined : undefined,
+          ech: withProxy && tls && ['vless', 'trojan'].includes(protocol) ? ech || undefined : undefined,
         }),
       })
       toast.success(
@@ -923,57 +958,6 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                     </div>
                   </>
                 )}
-                <div className="rounded-xl border bg-background/45 p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="text-xs font-semibold">{t('VPS providers')}</div>
-                    <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:text-emerald-300">{t('Free options first')}</span>
-                  </div>
-                  <p className="text-[11px] leading-relaxed text-muted-foreground">
-                    {t('Choose a provider to create your own VPS, then enter its assigned public IP or domain above. These links do not automatically create servers or supply shared IP addresses.')}
-                  </p>
-                  <div className="grid gap-2 sm:grid-cols-2">
-                    <a href="https://cloud.oracle.com/" target="_blank" rel="noreferrer" className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-2.5 hover:border-emerald-500">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-xs font-semibold">Oracle Cloud</div>
-                        <span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">{t('Default · Always Free')}</span>
-                      </div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">Ampere A1: up to 2 OCPU / 12 GB RAM within free limits; capacity constrained</div>
-                    </a>
-                    <a href="https://cloud.google.com/free" target="_blank" rel="noreferrer" className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-2.5 hover:border-emerald-500">
-                      <div className="flex items-center justify-between gap-2">
-                        <div className="text-xs font-semibold">Google Cloud</div>
-                        <span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-300">{t('Always Free')}</span>
-                      </div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">One e2-micro in selected US regions; very limited outbound traffic</div>
-                    </a>
-                    <a href="https://www.kamatera.com/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
-                      <div className="text-xs font-semibold">Kamatera</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">Trial credit only · not permanently free</div>
-                    </a>
-                    <a href="https://www.hetzner.com/cloud/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
-                      <div className="text-xs font-semibold">Hetzner Cloud</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">Paid VPS · IPv4 / IPv6</div>
-                    </a>
-                    <a href="https://www.digitalocean.com/products/droplets" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
-                      <div className="text-xs font-semibold">DigitalOcean</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">Paid VPS · IPv4 / IPv6 options</div>
-                    </a>
-                    <a href="https://www.vultr.com/products/cloud-compute/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
-                      <div className="text-xs font-semibold">Vultr</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">Paid VPS · public IPv4 / IPv6 support</div>
-                    </a>
-                    <a href="https://www.ovhcloud.com/en/vps/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60">
-                      <div className="text-xs font-semibold">OVHcloud</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">Paid VPS · IPv4 + IPv6 options</div>
-                    </a>
-                    <a href="https://www.cloudflare.com/products/registrar/" target="_blank" rel="noreferrer" className="rounded-lg border p-2.5 hover:border-sky-400/60 sm:col-span-2">
-                      <div className="text-xs font-semibold">Cloudflare DNS</div>
-                      <div className="mt-1 text-[10px] text-muted-foreground">Manage your own domain's A / AAAA records</div>
-                    </a>
-                  </div>
-                  <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-400">
-                    {t('Free Tier eligibility, regions, billing verification and capacity limits apply. No provider guarantees reachability on every Iranian ISP. Open the selected TCP/UDP port in both the VPS firewall and provider firewall.')}
-                  </p>                </div>
                 {isMtprotoC && (
                   <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('MTProto: address = server IP, port = proxy port — the secret is generated automatically. Users open the link in Telegram.')}</p>
                 )}
@@ -981,9 +965,8 @@ function CreateClientDialog({ open, onOpenChange, onDone }: { open: boolean; onO
                   <p className="rounded-lg border border-dashed p-2.5 text-xs leading-relaxed text-muted-foreground">{t('Hysteria2/TUIC need a sing-box based server (Hiddify, s-ui, …); the config file has both client and server JSON.')}</p>
                 )}
                 <div className="rounded-xl border border-odyssey-cyan/25 bg-odyssey-cyan/[0.04] p-3 space-y-2">
-                  <div className="flex items-center justify-between gap-2"><Label>{t('ECH (Encrypted Client Hello)')}</Label><Badge variant="outline">{['vless', 'trojan'].includes(protocol) && tls ? t('Supported') : t('Requires TLS on VLESS/Trojan')}</Badge></div>
-                  <Input value={ech} onChange={(e) => setEch(e.target.value)} disabled={!['vless', 'trojan'].includes(protocol) || !tls} placeholder="udp://1.1.1.1 · https://1.1.1.1/dns-query · ECHConfigList" dir="ltr" className="font-mono text-xs" />
-                  <p className="text-[10px] leading-relaxed text-muted-foreground">{t('Enter a base64 ECHConfigList or an Xray DNS resolver such as udp://1.1.1.1. Xray clients that support ECH will use it.')}</p>
+                  <div className="flex items-center justify-between gap-2"><Label>{t('ECH (Encrypted Client Hello)')}</Label><Badge variant="outline">{echStatus === 'checking' ? t('Checking DNS') : echStatus === 'found' ? t('ECH found · auto-filled') : echStatus === 'unavailable' ? t('No ECH record found') : t('Automatic')}</Badge></div>
+                  <p className="text-[11px] leading-relaxed text-muted-foreground">{echStatus === 'found' ? t('ECHConfigList was fetched automatically from the selected SNI HTTPS DNS record.') : echStatus === 'checking' ? t('Checking the selected domain for an ECH record…') : echStatus === 'unavailable' ? t('This domain does not publish an ECH record. The config will be generated without ECH to avoid breaking the connection.') : t('ECH is detected and filled automatically when the selected domain publishes an ECH record.')}</p>
                 </div>
                 </div>}
                 {configTab === 'tools' && <div className="space-y-3.5">
@@ -1458,6 +1441,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
   const [remark, setRemark] = useState(`Odyssey-${defaultRemark}`)
   const [busy, setBusy] = useState(false)
   const { t } = useLang()
+  const echStatus = useAutoEchConfig(open && tls && ['vless', 'trojan'].includes(protocol), backendSubmitFields(backendMode, pickedWorker, { address, port, sni, host, path, transport, tls }).address, sni, setEch)
 
   const isMtproto = protocol === 'mtproto'
   const isSingboxLike = protocol === 'hysteria2' || protocol === 'tuic'
@@ -1496,7 +1480,7 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
           host: isMtproto || isSingboxLike ? undefined : fields.host,
           tls: isMtproto || isSingboxLike ? true : fields.tls,
           fragment: showFragment ? fragment.trim() || undefined : undefined,
-          ech: tls && ['vless', 'trojan'].includes(protocol) ? ech.trim() || undefined : undefined,
+          ech: tls && ['vless', 'trojan'].includes(protocol) ? ech || undefined : undefined,
           remark: remark.trim() || undefined,
         }),
       })
@@ -1627,10 +1611,9 @@ function AddAccountButton({ clientId, onAdded, defaultRemark }: { clientId: stri
               )}
             </div>
             {['vless', 'trojan'].includes(protocol) && tls && (
-              <div className="space-y-1.5 rounded-lg border bg-muted/20 p-2.5">
-                <Label>{t('ECH (Encrypted Client Hello)')}</Label>
-                <Input value={ech} onChange={(e) => setEch(e.target.value)} placeholder="udp://1.1.1.1 · ECHConfigList" dir="ltr" className="font-mono text-xs" />
-                <p className="text-[10px] text-muted-foreground">{t('Optional: base64 ECHConfigList or Xray DNS resolver.')}</p>
+              <div className="space-y-1.5 rounded-lg border border-odyssey-cyan/25 bg-odyssey-cyan/[0.04] p-2.5">
+                <div className="flex items-center justify-between gap-2"><Label>{t('ECH (Encrypted Client Hello)')}</Label><Badge variant="outline">{echStatus === 'checking' ? t('Checking DNS') : echStatus === 'found' ? t('ECH found · auto-filled') : echStatus === 'unavailable' ? t('No ECH record found') : t('Automatic')}</Badge></div>
+                <p className="text-[10px] text-muted-foreground">{echStatus === 'found' ? t('ECHConfigList was fetched automatically from the selected SNI HTTPS DNS record.') : echStatus === 'checking' ? t('Checking the selected domain for an ECH record…') : echStatus === 'unavailable' ? t('No ECH record found; this config will be created without ECH.') : t('ECH is detected and filled automatically when available.')}</p>
               </div>
             )}
             {showStream && (
