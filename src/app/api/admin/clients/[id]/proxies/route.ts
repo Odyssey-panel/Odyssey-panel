@@ -1,6 +1,6 @@
 import { db } from '@/lib/db'
 import { requireAuth, jsonSafe } from '@/lib/auth'
-import { buildServerConfig, isValidFragment } from '@/lib/links'
+import { buildServerConfig, isValidFragment, isValidEchConfig } from '@/lib/links'
 import { generateSecret, validateProtocol } from '@/lib/secrets'
 import { normalizeProxyTarget, panelHost, syncBackend } from '@/lib/backend'
 
@@ -19,6 +19,7 @@ type ProxyBody = {
   transport?: string
   tls?: boolean
   fragment?: string
+  ech?: string
 }
 
 export async function POST(req: Request, { params }: Params) {
@@ -34,6 +35,9 @@ export async function POST(req: Request, { params }: Params) {
   if (protoErr) return Response.json({ error: protoErr }, { status: 400 })
   if (body.fragment !== undefined && !isValidFragment(body.fragment)) {
     return Response.json({ error: 'Invalid fragment value' }, { status: 400 })
+  }
+  if (body.ech && (!body.tls || !['vless', 'trojan'].includes(protocol) || !isValidEchConfig(body.ech))) {
+    return Response.json({ error: 'Invalid ECH configuration for this protocol' }, { status: 400 })
   }
   const address = (body.address || '').trim()
   const port = Number(body.port)
@@ -78,6 +82,7 @@ export async function POST(req: Request, { params }: Params) {
     transport: norm.transport ?? 'ws',
     tls: norm.tls ?? true,
     fragment: body.fragment?.trim() || null,
+    ech: body.ech?.trim() || null,
   }
 
   const proxy = await db.proxy.create({
@@ -94,6 +99,7 @@ export async function POST(req: Request, { params }: Params) {
       transport: proxyLike.transport,
       tls: proxyLike.tls,
       fragment: proxyLike.fragment,
+      ech: proxyLike.ech,
       serverConfig: JSON.stringify(buildServerConfig(proxyLike)),
     },
   })
