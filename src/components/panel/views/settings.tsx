@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { useTheme } from 'next-themes'
 import { useLang, type Lang } from '@/lib/i18n'
 import { cn } from '@/lib/utils'
-import { Loader2, Save, Globe2, Languages, Palette, MonitorSmartphone, Sun, Moon } from 'lucide-react'
+import { Loader2, Save, Globe2, Languages, Palette, MonitorSmartphone, Sun, Moon, KeyRound, X } from 'lucide-react'
 
 type Settings = {
   publicUrl: string
@@ -23,6 +23,7 @@ export function SettingsView() {
   const { data, loading, reload } = useApi<{ settings: Settings }>('/api/admin/settings')
   const [form, setForm] = useState<Settings | null>(null)
   const [newPassword, setNewPassword] = useState('')
+  const [showPasswordForm, setShowPasswordForm] = useState(false)
   const [saving, setSaving] = useState(false)
   const { lang, setLang, t } = useLang()
   const { theme, setTheme } = useTheme()
@@ -103,15 +104,37 @@ export function SettingsView() {
                 {t('Used in subscription links and QR codes. Empty = auto-detected from the browser you manage the panel with, so it adapts to whatever domain you deploy on.')}
               </p>
             </div>
-            <div className="space-y-1.5">
-              <Label htmlFor="st-password">{t('Change admin password')}</Label>
-              <Input
-                id="st-password"
-                type="password"
-                placeholder={t('new password (min 6 chars)')}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
-              />
+            <div className="space-y-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Label>{t('Admin password')}</Label>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant={showPasswordForm ? 'outline' : 'secondary'}
+                  onClick={() => {
+                    setShowPasswordForm((v) => !v)
+                    if (showPasswordForm) setNewPassword('')
+                  }}
+                >
+                  {showPasswordForm ? <X className="h-4 w-4" /> : <KeyRound className="h-4 w-4" />}
+                  {showPasswordForm ? t('Cancel') : t('Change admin password')}
+                </Button>
+              </div>
+              {showPasswordForm && (
+                <div className="space-y-1.5">
+                  <Input
+                    id="st-password"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder={t('new password (min 6 chars)')}
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                  />
+                  <p className="text-xs leading-relaxed text-muted-foreground">
+                    {t('Enter a new password, then select Save changes.')}
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </CardContent>
