@@ -24,6 +24,7 @@ type CreateBody = {
   path?: string
   tls?: boolean
   fragment?: string
+  maxConnections?: number
 }
 
 export async function GET() {
@@ -64,6 +65,7 @@ export async function POST(req: Request) {
       limitBytes: BigInt(Math.round((body.trafficGb ?? 0) * 1024 ** 3)),
       expiresAt,
       subToken,
+      maxConnections: Math.min(1000, Math.max(1, Math.floor(body.maxConnections || 1))),
     },
   })
 
