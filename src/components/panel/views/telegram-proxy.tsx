@@ -191,6 +191,44 @@ echo "Telegram link: https://t.me/proxy?server=YOUR_PUBLIC_IP_OR_DOMAIN&port=$PO
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base"><Server className="h-4 w-4" />{t('VPS providers')}</CardTitle>
+          <CardDescription>{t('Choose a VPS provider for your Telegram MTProxy server. Create the VPS there, then use its public IP or domain above.')}</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          <div className="grid gap-2 sm:grid-cols-2">
+            <a href="https://cloud.oracle.com/" target="_blank" rel="noreferrer" className="rounded-lg border border-emerald-500/40 bg-emerald-500/5 p-3 hover:border-emerald-500">
+              <div className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">Oracle Cloud</span><span className="rounded-full bg-emerald-500/15 px-1.5 py-0.5 text-[9px] font-bold text-emerald-700 dark:text-emerald-300">{t('Free tier')}</span></div>
+              <p className="mt-1 text-[10px] text-muted-foreground">Ampere A1 free allowance; capacity can be limited</p>
+            </a>
+            <a href="https://cloud.google.com/free" target="_blank" rel="noreferrer" className="rounded-lg border border-emerald-500/30 bg-emerald-500/5 p-3 hover:border-emerald-500">
+              <div className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">Google Cloud</span><span className="rounded-full bg-emerald-500/10 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700 dark:text-emerald-300">{t('Free tier')}</span></div>
+              <p className="mt-1 text-[10px] text-muted-foreground">Limited free compute in selected regions</p>
+            </a>
+            <a href="https://www.kamatera.com/" target="_blank" rel="noreferrer" className="rounded-lg border p-3 hover:border-sky-400/60">
+              <span className="text-sm font-semibold">Kamatera</span><p className="mt-1 text-[10px] text-muted-foreground">Trial credit; not permanently free</p>
+            </a>
+            <a href="https://www.hetzner.com/cloud/" target="_blank" rel="noreferrer" className="rounded-lg border p-3 hover:border-sky-400/60">
+              <span className="text-sm font-semibold">Hetzner Cloud</span><p className="mt-1 text-[10px] text-muted-foreground">Paid VPS · IPv4 / IPv6</p>
+            </a>
+            <a href="https://www.digitalocean.com/products/droplets" target="_blank" rel="noreferrer" className="rounded-lg border p-3 hover:border-sky-400/60">
+              <span className="text-sm font-semibold">DigitalOcean</span><p className="mt-1 text-[10px] text-muted-foreground">Paid VPS · public IP options</p>
+            </a>
+            <a href="https://www.vultr.com/products/cloud-compute/" target="_blank" rel="noreferrer" className="rounded-lg border p-3 hover:border-sky-400/60">
+              <span className="text-sm font-semibold">Vultr</span><p className="mt-1 text-[10px] text-muted-foreground">Paid VPS · public IPv4 / IPv6</p>
+            </a>
+            <a href="https://www.ovhcloud.com/en/vps/" target="_blank" rel="noreferrer" className="rounded-lg border p-3 hover:border-sky-400/60">
+              <span className="text-sm font-semibold">OVHcloud</span><p className="mt-1 text-[10px] text-muted-foreground">Paid VPS · IPv4 / IPv6 options</p>
+            </a>
+            <a href="https://www.cloudflare.com/products/registrar/" target="_blank" rel="noreferrer" className="rounded-lg border p-3 hover:border-sky-400/60">
+              <span className="text-sm font-semibold">Cloudflare DNS</span><p className="mt-1 text-[10px] text-muted-foreground">Manage your domain's DNS records</p>
+            </a>
+          </div>
+          <p className="text-[10px] leading-relaxed text-amber-700 dark:text-amber-400">{t('Free tiers have eligibility, region, billing and capacity limits. After creating the VPS, allow the selected TCP port in both its operating-system firewall and provider firewall.')}</p>
+        </CardContent>
+      </Card>
+
       {secret && (
         <>
           <Card>
