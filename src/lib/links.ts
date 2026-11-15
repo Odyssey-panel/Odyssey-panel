@@ -21,6 +21,8 @@ export type ProxyLike = {
   flow?: string | null
   /** TLS-fragment string in Marzban order: "<length>,<interval>,<packets>" e.g. "100-200,20-30,tlshello" */
   fragment?: string | null
+  /** Xray ECHConfigList (base64) or DNS lookup specification. */
+  ech?: string | null
 }
 
 /** All protocols the panel can generate accounts/links for. */
@@ -89,6 +91,14 @@ export function isValidFragment(v: string): boolean {
   return /^[a-zA-Z0-9.,-]+$/.test(s) && s.split(',').length === 3
 }
 
+/** Validate ECHConfigList base64 or an Xray DNS lookup specification. */
+export function isValidEchConfig(v: string): boolean {
+  const s = (v || '').trim()
+  if (!s) return true
+  if (s.length > 8192 || /[\u0000-\u0020]/.test(s)) return false
+  return /^[A-Za-z0-9+/=_-]+$/.test(s) || /^(?:[A-Za-z0-9.-]+\+)?(?:udp|https|h2c):\/\/[^\s]+$/i.test(s)
+}
+
 /** Deep links that open the user's VPN app and import the subscription in one tap. */
 export function buildDeepLinks(subUrl: string): { id: string; label: string; url: string }[] {
   const enc = encodeURIComponent(subUrl)
@@ -115,6 +125,7 @@ export function buildShareLink(p: ProxyLike): string {
     q.push(`type=${transport}`)
     q.push(`security=${security}`)
     if (p.sni) q.push(`sni=${encodeURIComponent(p.sni)}`)
+    if (p.ech && p.tls) q.push(`ech=${encodeURIComponent(p.ech)}`)
     if (p.host) q.push(`host=${encodeURIComponent(p.host)}`)
     if (transport === 'ws' && p.path) q.push(`path=${encodeURIComponent(p.path)}`)
     if (transport === 'grpc' && p.path) q.push(`serviceName=${encodeURIComponent(p.path)}`)
@@ -146,6 +157,7 @@ export function buildShareLink(p: ProxyLike): string {
 
   if (p.protocol === 'trojan') {
     if (p.sni) q.push(`sni=${encodeURIComponent(p.sni)}`)
+    if (p.ech && p.tls) q.push(`ech=${encodeURIComponent(p.ech)}`)
     if (p.host) q.push(`host=${encodeURIComponent(p.host)}`)
     q.push(`type=${transport}`)
     if (transport === 'ws' && p.path) q.push(`path=${encodeURIComponent(p.path)}`)
