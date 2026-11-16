@@ -234,6 +234,37 @@ const FA: Record<string, string> = {
   'Create user': 'ساخت کاربر',
   'same as address': 'همان آدرس',
 
+
+  // ── Easy create + provider helpers ───────────────────────────────────
+  'Easy create': 'ساخت آسان',
+  'Create a ready-to-use VLESS account with automatic operator settings.':
+    'یک حساب VLESS آمادهٔ اتصال با تنظیمات خودکار متناسب با اپراتور بساز.',
+  'Mobile operator / ISP': 'اپراتور یا شرکت ارائه‌دهنده اینترنت',
+  'All operators': 'همهٔ اپراتورها',
+  'The panel selects a compatible default automatically; actual speed varies by network.':
+    'پنل یک تنظیم پیش‌فرض سازگار انتخاب می‌کند؛ سرعت واقعی به شبکه و اپراتور بستگی دارد.',
+  'Simultaneous connections': 'تعداد اتصال‌های هم‌زمان',
+  'Connection limit is recorded with the account; enforcement requires backend session tracking.':
+    'این تعداد در حساب ذخیره می‌شود؛ اعمال واقعی محدودیت به قابلیت ردیابی نشست‌ها در سرور نیاز دارد.',
+  'Enter a valid connection limit': 'تعداد اتصال هم‌زمان معتبر وارد کن',
+  'Account created, but this device could not verify the tunnel':
+    'حساب ساخته شد، اما تونل از این دستگاه تأیید نشد',
+  'Account created and tunnel verified from this device':
+    'حساب ساخته شد و تونل از این دستگاه با موفقیت بررسی شد',
+  'Account created': 'حساب ساخته شد',
+  Create: 'ساخت',
+  Worker: 'ورکر',
+  'Enter a valid IPv4, IPv6 or domain address': 'یک آدرس IPv4، IPv6 یا دامنهٔ معتبر وارد کن',
+  'Enter a valid port between 1 and 65535': 'یک پورت معتبر بین ۱ تا ۶۵۵۳۵ وارد کن',
+  'VPS providers': 'ارائه‌دهندگان سرور مجازی',
+  'Free options first': 'ابتدا گزینه‌های رایگان',
+  'Choose a provider to create your own VPS, then enter its assigned public IP or domain above. These links do not automatically create servers or supply shared IP addresses.':
+    'برای ساخت سرور مجازی خودت یک ارائه‌دهنده انتخاب کن و سپس IP عمومی یا دامنه‌ای را که به تو اختصاص می‌دهد در بالا وارد کن. این لینک‌ها سرور را خودکار نمی‌سازند و IP اشتراکی هم ارائه نمی‌کنند.',
+  'Default · Always Free': 'پیش‌فرض · رایگان همیشگی',
+  'Always Free': 'رایگان همیشگی',
+  'Free Tier eligibility, regions, billing verification and capacity limits apply. No provider guarantees reachability on every Iranian ISP. Open the selected TCP/UDP port in both the VPS firewall and provider firewall.':
+    'شرایط استفاده از طرح رایگان، منطقهٔ سرور، تأیید پرداخت و محدودیت ظرفیت هر ارائه‌دهنده متفاوت است. هیچ ارائه‌دهنده‌ای دسترسی از تمام اپراتورهای ایران را تضمین نمی‌کند. پورت TCP/UDP انتخابی را هم در فایروال سرور و هم در فایروال ارائه‌دهنده باز کن.',
+
   // Edit dialog
   'Edit user': 'ویرایش کاربر',
   'Traffic limit (GB)': 'محدودیت ترافیک (گیگابایت)',
