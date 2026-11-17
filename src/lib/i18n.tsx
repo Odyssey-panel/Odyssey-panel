@@ -108,7 +108,6 @@ const FA: Record<string, string> = {
   'Panel uptime': 'مدت فعالیت پنل',
   'Server location': 'موقعیت سرور',
   'Local environment': 'محیط محلی',
-  days: 'روز',
   hours: 'ساعت',
   minutes: 'دقیقه',
   seconds: 'ثانیه',
