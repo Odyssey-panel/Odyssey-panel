@@ -23,6 +23,7 @@ import {
   Shield,
   Cpu,
   Layers,
+  MapPin,
 } from 'lucide-react'
 
 type Stats = {
@@ -31,7 +32,7 @@ type Stats = {
   nodes: { total: number; up: number; avgLatency: number | null }
   workers: { total: number; up: number }
   protocols: Record<string, number>
-  system: { ramUsed: number; ramTotal: number; ramPct: number; uptimeS: number; platform: string }
+  system: { ramUsed: number; ramTotal: number; ramPct: number; uptimeS: number; platform: string; location: string }
   baseUrl: string
 }
 
@@ -77,15 +78,43 @@ function CountUp({ value, suffix = '' }: { value: number; suffix?: string }) {
   )
 }
 
-function uptimeLabel(sec: number): string {
+function uptimeLabel(sec: number, t: (s: string) => string): string {
   const d = Math.floor(sec / 86400)
   const h = Math.floor((sec % 86400) / 3600)
-  return d > 0 ? `${d}d ${h}h` : `${h}h ${Math.floor((sec % 3600) / 60)}m`
+  const m = Math.floor((sec % 3600) / 60)
+  const s = Math.floor(sec % 60)
+  if (d) return `${d} ${t('days')} ${h} ${t('hours')} ${m} ${t('minutes')}`
+  if (h) return `${h} ${t('hours')} ${m} ${t('minutes')} ${s} ${t('seconds')}`
+  if (m) return `${m} ${t('minutes')} ${s} ${t('seconds')}`
+  return `${s} ${t('seconds')}`
+}
+
+function regionLabel(region: string, t: (s: string) => string): string {
+  const locations: Record<string, string> = {
+    'asia-southeast1-eqsg3a': 'Singapore',
+    'europe-west4-drams3a': 'Amsterdam, Netherlands',
+    'us-east4-eqdc4a': 'Virginia, USA',
+    'us-west2': 'California, USA',
+  }
+  if (!region || region === 'local') return t('Local environment')
+  return locations[region] || region
 }
 
 export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void }) {
   const { data, loading, reload } = useApi<Stats>('/api/admin/stats')
-  const { t, lang } = useLang()
+  const { t } = useLang()
+  const [liveUptime, setLiveUptime] = useState(0)
+
+  useEffect(() => {
+    if (!data?.system?.uptimeS) return
+    const startedAt = Date.now()
+    const baseUptime = data.system.uptimeS
+    setLiveUptime(baseUptime)
+    const timer = window.setInterval(() => {
+      setLiveUptime(baseUptime + Math.floor((Date.now() - startedAt) / 1000))
+    }, 1000)
+    return () => window.clearInterval(timer)
+  }, [data?.system?.uptimeS])
 
   if (loading && !data) {
     return (
@@ -242,11 +271,16 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void
               </div>
             </div>
             <Progress value={ramPct} aria-label="RAM usage" className="progress-gradient" />
-            <div className="flex items-center justify-between text-[11px] text-muted-foreground">
+            <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
               <span className="font-mono" dir="ltr">{data.system?.platform || '—'}</span>
-              <span dir="ltr">
-                {t('Uptime')} <span className="font-mono">· {uptimeLabel(data.system?.uptimeS ?? 0)}</span>
+              <span className="inline-flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {t('Server location')}: <span className="font-medium text-foreground">{regionLabel(data.system?.location || '', t)}</span>
               </span>
+            </div>
+            <div className="flex items-center justify-between rounded-lg border bg-white/[0.03] px-3 py-2 text-xs dark:bg-white/[0.03]">
+              <span className="text-muted-foreground">{t('Panel uptime')}</span>
+              <span className="font-mono font-semibold tabular-nums" dir="ltr">{uptimeLabel(liveUptime || data.system?.uptimeS || 0, t)}</span>
             </div>
           </CardContent>
         </Card>
