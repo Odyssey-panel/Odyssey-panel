@@ -48,8 +48,9 @@ export async function GET() {
       ramUsed,
       ramTotal,
       ramPct: ramTotal > 0 ? Math.round((ramUsed / ramTotal) * 100) : 0,
-      uptimeS: Math.round(os.uptime()),
+      uptimeS: Math.floor(process.uptime()),
       platform: `${os.type()} ${os.arch()}`,
+      location: process.env.RAILWAY_REPLICA_REGION || 'local',
     },
     baseUrl: await getBaseUrl(),
   })
