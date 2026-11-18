@@ -686,3 +686,137 @@ input:focus, textarea:focus, select:focus {
     transition-duration: .01ms !important;
   }
 }
+
+
+/* =========================================================
+   ODYSSEY VISUAL OVERHAUL — AURORA / LIQUID GLASS
+   Pure presentation layer: preserves components and behavior.
+   ========================================================= */
+:root {
+  --radius: 1.05rem;
+  --odyssey-glass-light: oklch(1 0 0 / .68);
+}
+.dark {
+  --background: oklch(.145 .026 250);
+  --card: oklch(.205 .028 248 / .68);
+  --popover: oklch(.19 .03 248 / .97);
+  --border: oklch(.78 .055 218 / .14);
+  --input: oklch(.8 .04 220 / .17);
+  --muted: oklch(1 0 0 / .065);
+  --accent: oklch(.72 .105 213 / .13);
+}
+@layer base {
+  html { scroll-behavior: smooth; }
+  body { min-height: 100vh; background-attachment: fixed; }
+  button, a, [role="button"] { -webkit-tap-highlight-color: transparent; }
+  :focus-visible { outline: 2px solid oklch(.76 .12 212 / .9); outline-offset: 3px; }
+}
+@layer utilities {
+  .glass {
+    background: linear-gradient(145deg, oklch(1 0 0 / .105), oklch(1 0 0 / .025) 48%, oklch(.72 .1 214 / .055));
+    border-color: oklch(.82 .06 218 / .19);
+    backdrop-filter: blur(30px) saturate(1.9);
+    -webkit-backdrop-filter: blur(30px) saturate(1.9);
+    box-shadow: 0 18px 55px -32px oklch(0 0 0 / .72), inset 0 1px 0 oklch(1 0 0 / .14);
+  }
+  .dark .glass {
+    background: linear-gradient(145deg, oklch(.25 .035 246 / .78), oklch(.16 .025 250 / .72) 55%, oklch(.29 .07 220 / .17));
+    border-color: oklch(.78 .08 215 / .19);
+    box-shadow: 0 22px 65px -34px oklch(0 0 0 / .92), inset 0 1px 0 oklch(1 0 0 / .12);
+  }
+  .aurora-edge { isolation: isolate; }
+  .aurora-edge::before { pointer-events: none; }
+}
+/* Ambient aurora lighting */
+body::before {
+  background:
+    radial-gradient(58rem 36rem at 0% -12%, oklch(.55 .11 248 / .17), transparent 65%),
+    radial-gradient(48rem 32rem at 100% 0%, oklch(.76 .12 210 / .17), transparent 62%),
+    radial-gradient(54rem 34rem at 50% 110%, oklch(.58 .11 185 / .10), transparent 62%);
+}
+.dark body::before {
+  background:
+    radial-gradient(58rem 36rem at 0% -12%, oklch(.48 .13 248 / .32), transparent 65%),
+    radial-gradient(48rem 32rem at 100% 0%, oklch(.65 .13 210 / .24), transparent 62%),
+    radial-gradient(54rem 34rem at 50% 110%, oklch(.45 .12 185 / .18), transparent 62%);
+}
+/* Main shell / floating navigation */
+aside.glass {
+  border-radius: 1.8rem !important;
+  background: linear-gradient(165deg, oklch(.19 .035 248 / .92), oklch(.13 .026 250 / .88)) !important;
+  border-color: oklch(.78 .08 215 / .2) !important;
+  box-shadow: 0 24px 70px -35px oklch(0 0 0 / .85), inset 0 1px 0 oklch(1 0 0 / .13), 0 0 36px -24px oklch(.72 .1 214 / .5);
+}
+aside.glass nav button, aside.glass nav a {
+  border-radius: 1rem;
+  transition: background .22s ease, color .22s ease, transform .22s ease, box-shadow .22s ease;
+}
+aside.glass nav button:hover, aside.glass nav a:hover {
+  transform: translateX(-2px);
+  background: oklch(.78 .08 215 / .09);
+}
+html[dir="ltr"] aside.glass nav button:hover,
+html[dir="ltr"] aside.glass nav a:hover { transform: translateX(2px); }
+aside.glass nav button[aria-current="page"],
+aside.glass nav button[data-active="true"] {
+  background: linear-gradient(105deg, oklch(.72 .1 214 / .22), oklch(.55 .08 248 / .11)) !important;
+  box-shadow: inset 0 0 0 1px oklch(.76 .1 214 / .28), 0 8px 24px -16px oklch(.72 .1 214 / .85);
+}
+.odyssey-mobile-header {
+  border-color: oklch(.78 .08 215 / .2) !important;
+  background: oklch(.15 .03 248 / .78) !important;
+}
+.liquid-glass-nav {
+  background: linear-gradient(115deg, oklch(.19 .04 248 / .9), oklch(.13 .03 250 / .88) 55%, oklch(.24 .08 215 / .83)) !important;
+  border-color: oklch(.78 .09 215 / .28) !important;
+  backdrop-filter: blur(34px) saturate(2) !important;
+  -webkit-backdrop-filter: blur(34px) saturate(2) !important;
+}
+/* All shadcn surfaces become layered glass */
+[data-slot="card"], [data-slot="popover-content"], [data-slot="dropdown-menu-content"],
+[role="dialog"], [data-radix-popper-content-wrapper] > div {
+  border-color: color-mix(in oklab, var(--border) 78%, oklch(.72 .1 214 / .2));
+}
+[data-slot="card"] {
+  box-shadow: 0 12px 38px -30px oklch(0 0 0 / .62), inset 0 1px 0 oklch(1 0 0 / .035);
+  transition: border-color .25s ease, box-shadow .25s ease, transform .25s ease;
+}
+.dark [data-slot="card"] {
+  background: linear-gradient(145deg, oklch(.22 .03 248 / .72), oklch(.17 .025 250 / .72));
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+[data-slot="card"]:hover {
+  border-color: oklch(.72 .1 214 / .28);
+}
+input, textarea, [role="combobox"], [data-slot="select-trigger"] {
+  transition: border-color .2s ease, box-shadow .2s ease, background .2s ease !important;
+}
+input:focus, textarea:focus, [role="combobox"]:focus-visible, [data-slot="select-trigger"]:focus-visible {
+  box-shadow: 0 0 0 3px oklch(.72 .1 214 / .16) !important;
+}
+button[data-slot="button"], a[data-slot="button"] {
+  transition: transform .2s cubic-bezier(.2,.8,.2,1), box-shadow .2s ease, filter .2s ease;
+}
+button[data-slot="button"]:active, a[data-slot="button"]:active { transform: scale(.975); }
+button[data-slot="button"]:not(:disabled):hover {
+  box-shadow: 0 9px 24px -15px oklch(.65 .11 215 / .7);
+}
+.odyssey-view-enter { animation: odyssey-view-in .42s cubic-bezier(.2,.8,.2,1) both; }
+@keyframes odyssey-view-in {
+  from { opacity: 0; transform: translateY(9px) scale(.997); filter: blur(3px); }
+  to { opacity: 1; transform: translateY(0) scale(1); filter: blur(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+}
+@media (min-width: 768px) {
+  aside.glass { position: sticky; }
+  main > .mx-auto.max-w-6xl { padding-bottom: 1.5rem; }
+}
+@media (max-width: 767px) {
+  .odyssey-mobile-header { top: max(.5rem, env(safe-area-inset-top)) !important; margin-inline: .65rem !important; }
+  main { padding-inline: .85rem !important; }
+  .liquid-glass-nav { inset-inline: .55rem !important; bottom: max(.55rem, env(safe-area-inset-bottom)) !important; }
+  [data-slot="card"] { border-radius: 1.15rem; }
+}
