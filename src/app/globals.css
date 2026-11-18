@@ -1056,3 +1056,232 @@ button:not(:disabled), [role="button"], a { touch-action: manipulation; }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
 }
+
+
+/* ═══════════════════════════════════════════════════════════════════════
+   ODYSSEY V20 — SIGNATURE INTERFACE / NOCTURNE
+   Visual-only refinement. Keeps all existing components and behavior.
+   ═══════════════════════════════════════════════════════════════════════ */
+:root {
+  --odyssey-ink: oklch(.115 .025 252);
+  --odyssey-panel: oklch(.18 .03 250 / .82);
+  --odyssey-stroke: oklch(.82 .07 215 / .16);
+  --odyssey-cyan: oklch(.79 .13 205);
+  --odyssey-violet: oklch(.68 .14 285);
+  --odyssey-shadow: 0 28px 80px -44px oklch(0 0 0 / .88);
+}
+html { color-scheme: dark; }
+.dark body {
+  background-color: var(--odyssey-ink);
+  background-image:
+    radial-gradient(ellipse 54rem 32rem at 8% -12%, oklch(.48 .13 255 / .19), transparent 72%),
+    radial-gradient(ellipse 42rem 30rem at 96% 8%, oklch(.55 .15 205 / .13), transparent 70%),
+    radial-gradient(ellipse 38rem 34rem at 55% 105%, oklch(.48 .14 285 / .10), transparent 70%),
+    linear-gradient(180deg, oklch(.14 .028 252), oklch(.105 .022 255));
+  background-attachment: fixed;
+}
+.dark body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: .16;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 180 180' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.86' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='.13'/%3E%3C/svg%3E");
+  mix-blend-mode: soft-light;
+}
+.dark main { isolation: isolate; }
+.dark main [data-slot="card"] {
+  background:
+    radial-gradient(ellipse 90% 65% at 0% 0%, oklch(.58 .11 245 / .075), transparent 75%),
+    linear-gradient(145deg, oklch(.215 .034 250 / .91), oklch(.145 .026 255 / .94) 72%, oklch(.19 .055 220 / .86)) !important;
+  border: 1px solid var(--odyssey-stroke) !important;
+  box-shadow: 0 18px 54px -38px oklch(0 0 0 / .92), inset 0 1px 0 oklch(1 1 1 / .075);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
+}
+.dark main [data-slot="card"]::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  border-radius: inherit;
+  background: linear-gradient(118deg, oklch(1 1 1 / .055), transparent 28%, transparent 72%, oklch(.7 .13 210 / .035));
+  opacity: .9;
+}
+.dark main [data-slot="card"]:hover {
+  transform: translateY(-3px);
+  border-color: oklch(.78 .12 208 / .36) !important;
+  box-shadow: 0 24px 66px -38px oklch(0 0 0 / .95), 0 0 34px -24px oklch(.72 .14 210 / .45), inset 0 1px 0 oklch(1 1 1 / .11);
+}
+/* A more intentional brand mark and sidebar silhouette */
+.dark aside.glass {
+  background:
+    radial-gradient(ellipse 100% 34% at 50% 0%, oklch(.62 .15 210 / .12), transparent 80%),
+    linear-gradient(165deg, oklch(.205 .038 250 / .97), oklch(.12 .026 255 / .98) 72%, oklch(.17 .06 225 / .94)) !important;
+  border: 1px solid oklch(.82 .09 210 / .2) !important;
+  box-shadow: 0 32px 90px -48px oklch(0 0 0 / .95), inset 0 1px 0 oklch(1 1 1 / .12), 0 0 48px -32px oklch(.68 .14 210 / .38);
+}
+.dark aside.glass > div:first-child {
+  background:
+    radial-gradient(ellipse at 100% 0%, oklch(.72 .14 205 / .14), transparent 62%),
+    linear-gradient(140deg, oklch(.3 .06 248 / .72), oklch(.17 .035 252 / .38));
+  border-color: oklch(.82 .1 210 / .2);
+  box-shadow: inset 0 1px 0 oklch(1 1 1 / .1), 0 14px 34px -26px oklch(0 0 0 / .85);
+}
+.dark aside.glass nav button {
+  position: relative;
+  color: oklch(.78 .025 235);
+  min-height: 2.9rem;
+  border-radius: .9rem !important;
+}
+.dark aside.glass nav button:hover {
+  color: oklch(.96 .018 215);
+  background: linear-gradient(90deg, oklch(.7 .12 210 / .10), oklch(.7 .12 210 / .025));
+}
+.dark aside.glass nav button[aria-current="page"] {
+  color: oklch(.96 .035 205);
+  background: linear-gradient(100deg, oklch(.7 .14 210 / .2), oklch(.55 .12 255 / .11)) !important;
+  border-color: oklch(.78 .12 208 / .26) !important;
+  box-shadow: inset 0 1px 0 oklch(1 1 1 / .08), 0 8px 28px -20px oklch(.72 .14 210 / .8);
+}
+.dark aside.glass nav button[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  inset-inline-end: .62rem;
+  top: 50%;
+  width: .34rem;
+  height: .34rem;
+  border-radius: 50%;
+  transform: translateY(-50%);
+  background: var(--odyssey-cyan);
+  box-shadow: 0 0 0 4px oklch(.78 .13 205 / .09), 0 0 16px oklch(.78 .13 205 / .85);
+}
+/* Dashboard welcome area — signature luminous stage */
+.dark main .animate-rise.relative.overflow-hidden {
+  position: relative;
+  isolation: isolate;
+  min-height: 13rem;
+  padding: clamp(1.5rem, 3vw, 2.5rem) !important;
+  border-radius: 1.9rem !important;
+  border: 1px solid oklch(.8 .1 210 / .28) !important;
+  background:
+    radial-gradient(ellipse 25rem 18rem at 90% 0%, oklch(.72 .16 205 / .23), transparent 72%),
+    radial-gradient(ellipse 22rem 17rem at 0% 110%, oklch(.58 .16 275 / .2), transparent 72%),
+    radial-gradient(ellipse 20rem 13rem at 58% 100%, oklch(.55 .12 235 / .12), transparent 72%),
+    linear-gradient(118deg, oklch(.23 .055 252 / .99), oklch(.145 .03 255 / .99) 58%, oklch(.2 .07 225 / .98)) !important;
+  box-shadow: 0 30px 85px -48px oklch(0 0 0 / .95), inset 0 1px 0 oklch(1 1 1 / .16), 0 0 52px -34px oklch(.7 .15 210 / .6);
+}
+.dark main .animate-rise.relative.overflow-hidden::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  width: 23rem;
+  aspect-ratio: 1;
+  inset-inline-end: -5rem;
+  top: -11rem;
+  border: 1px solid oklch(.8 .13 205 / .18);
+  border-radius: 50%;
+  box-shadow: 0 0 0 2.5rem oklch(.8 .13 205 / .025), 0 0 0 5rem oklch(.8 .13 205 / .018), inset 0 0 70px oklch(.7 .14 210 / .08);
+  pointer-events: none;
+}
+.dark main .animate-rise.relative.overflow-hidden::after {
+  content: "";
+  position: absolute;
+  inset: auto 8% 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, oklch(.8 .13 205 / .52), oklch(.72 .14 280 / .3), transparent);
+  pointer-events: none;
+}
+.dark main .animate-rise h1 {
+  font-size: clamp(1.65rem, 3vw, 2.45rem);
+  letter-spacing: -.045em;
+  line-height: 1.18;
+  text-shadow: 0 8px 35px oklch(0 0 0 / .35);
+}
+.dark main .animate-rise p { color: oklch(.79 .035 220); }
+.dark main .animate-rise button {
+  border: 1px solid oklch(.83 .1 205 / .24);
+  box-shadow: inset 0 1px 0 oklch(1 1 1 / .16), 0 10px 26px -18px oklch(.72 .15 205 / .8);
+}
+/* KPI cards get a refined top light and clearer number hierarchy */
+.dark main button.group > [data-slot="card"] {
+  border-radius: 1.35rem;
+  overflow: hidden;
+}
+.dark main button.group > [data-slot="card"]::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  inset-inline: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, oklch(.86 .11 205 / .62), transparent);
+  opacity: .75;
+}
+.dark main button.group [class*="font-display"][class*="text-"] {
+  color: oklch(.97 .018 215);
+  text-shadow: 0 4px 24px oklch(.7 .12 210 / .14);
+}
+.dark main button.group [class*="rounded-tr-sm"] {
+  border: 1px solid oklch(.82 .09 210 / .18);
+  background-image: linear-gradient(145deg, oklch(1 1 1 / .1), transparent);
+}
+/* Controls and buttons: crisp, tactile, less generic */
+.dark [data-slot="button"] {
+  border-radius: .9rem;
+  letter-spacing: -.012em;
+}
+.dark [data-slot="button"]:not(:disabled):hover {
+  filter: brightness(1.09);
+  box-shadow: 0 10px 30px -20px oklch(.72 .15 205 / .75);
+}
+.dark input, .dark textarea, .dark [role="combobox"], .dark [data-slot="select-trigger"] {
+  border-color: oklch(.8 .055 220 / .18);
+  background: oklch(.12 .025 252 / .58);
+  border-radius: .85rem;
+}
+.dark input:focus, .dark textarea:focus, .dark [role="combobox"]:focus-visible, .dark [data-slot="select-trigger"]:focus-visible {
+  border-color: oklch(.78 .13 205 / .58);
+  box-shadow: 0 0 0 3px oklch(.72 .14 205 / .13), 0 8px 24px -18px oklch(.72 .14 205 / .5) !important;
+}
+/* Subtle dividers and scrollbars make long views feel designed */
+.dark hr, .dark [data-orientation="horizontal"] {
+  border-color: oklch(.82 .06 215 / .12);
+  background-color: oklch(.82 .06 215 / .12);
+}
+.dark ::-webkit-scrollbar { width: 9px; height: 9px; }
+.dark ::-webkit-scrollbar-track { background: transparent; }
+.dark ::-webkit-scrollbar-thumb {
+  border: 2px solid transparent;
+  border-radius: 99px;
+  background: oklch(.72 .08 215 / .28);
+  background-clip: padding-box;
+}
+.dark ::-webkit-scrollbar-thumb:hover { background: oklch(.76 .12 210 / .48); background-clip: padding-box; }
+/* Light theme remains intentional rather than inheriting dark glass */
+:root:not(.dark) {
+  --odyssey-stroke: oklch(.48 .045 245 / .14);
+}
+:root:not(.dark) main [data-slot="card"] {
+  background: linear-gradient(145deg, oklch(1 0 0 / .97), oklch(.97 .012 230 / .94)) !important;
+  box-shadow: 0 18px 48px -38px oklch(.3 .05 245 / .24), inset 0 1px 0 white;
+}
+:root:not(.dark) main .animate-rise.relative.overflow-hidden {
+  border-radius: 1.9rem !important;
+  background:
+    radial-gradient(ellipse 26rem 18rem at 90% 0%, oklch(.72 .13 205 / .22), transparent 72%),
+    radial-gradient(ellipse 22rem 17rem at 0% 110%, oklch(.68 .14 275 / .12), transparent 72%),
+    linear-gradient(118deg, oklch(.96 .025 245), oklch(.92 .03 225) 60%, oklch(.94 .035 205)) !important;
+  border-color: oklch(.55 .08 215 / .2) !important;
+}
+:root:not(.dark) aside.glass {
+  border-color: oklch(.48 .05 245 / .15) !important;
+}
+@media (max-width: 767px) {
+  .dark main .animate-rise.relative.overflow-hidden { min-height: 14rem; }
+  .dark main [data-slot="card"]:hover { transform: none; }
+  .dark aside.glass { border-radius: 1.35rem !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .dark main [data-slot="card"] { transition: none !important; }
+}
