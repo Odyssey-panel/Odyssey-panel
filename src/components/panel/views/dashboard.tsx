@@ -24,6 +24,7 @@ import {
   Cpu,
   Layers,
   MapPin,
+  Gauge,
 } from 'lucide-react'
 
 type Stats = {
@@ -104,6 +105,30 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void
   const { data, loading, reload } = useApi<Stats>('/api/admin/stats')
   const { t } = useLang()
   const [liveUptime, setLiveUptime] = useState(0)
+  const [cpuPct, setCpuPct] = useState<number | null>(null)
+
+  // Lightweight CPU sampler; isolated endpoint avoids re-running dashboard DB queries.
+  useEffect(() => {
+    let alive = true
+    let timer: ReturnType<typeof setTimeout> | undefined
+    const sample = async () => {
+      try {
+        const response = await fetch('/api/admin/system/cpu', { cache: 'no-store' })
+        if (!response.ok) throw new Error('CPU sample unavailable')
+        const result = (await response.json()) as { cpuPct: number | null }
+        if (alive) setCpuPct(result.cpuPct)
+      } catch {
+        if (alive) setCpuPct(null)
+      } finally {
+        if (alive) timer = setTimeout(sample, 3000)
+      }
+    }
+    void sample()
+    return () => {
+      alive = false
+      if (timer) clearTimeout(timer)
+    }
+  }, [])
 
   useEffect(() => {
     if (!data?.system?.uptimeS) return
@@ -249,7 +274,7 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void
         ))}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-3">
+      <div className="grid gap-4 lg:grid-cols-4">
         {/* ── RAM / System ── */}
         <Card className="animate-pop" style={{ animationDelay: '220ms' }}>
           <CardHeader className="pb-4">
@@ -281,6 +306,32 @@ export function DashboardView({ onNavigate }: { onNavigate: (v: ViewKey) => void
             <div className="flex items-center justify-between rounded-lg border bg-white/[0.03] px-3 py-2 text-xs dark:bg-white/[0.03]">
               <span className="text-muted-foreground">{t('Panel uptime')}</span>
               <span className="font-mono font-semibold tabular-nums" dir="ltr">{uptimeLabel(liveUptime || data.system?.uptimeS || 0, t)}</span>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* ── Live CPU ── */}
+        <Card className="animate-pop" style={{ animationDelay: '250ms' }}>
+          <CardHeader className="pb-4">
+            <CardTitle className="flex items-center gap-2 text-[15px]">
+              <span className="flex h-7 w-7 items-center justify-center rounded-2xl rounded-tl-sm bg-violet-500/15 ring-1 ring-inset ring-violet-400/25">
+                <Gauge className="h-3.5 w-3.5 text-violet-400" />
+              </span>
+              {t('CPU usage')}
+            </CardTitle>
+            <CardDescription>{t('Live processor usage of the panel container')}</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-end justify-between gap-2">
+              <div className="font-display text-2xl font-semibold tabular-nums">
+                {cpuPct === null ? '—' : <>{cpuPct}<span className="text-base text-muted-foreground">%</span></>}
+              </div>
+              <span className="text-[11px] text-muted-foreground">{t('Updates every 3 seconds')}</span>
+            </div>
+            <Progress value={cpuPct ?? 0} aria-label="CPU usage" className="progress-gradient" />
+            <div className="flex items-center justify-between rounded-lg border bg-white/[0.03] px-3 py-2 text-xs dark:bg-white/[0.03]">
+              <span className="text-muted-foreground">{t('Measurement')}</span>
+              <span className="font-medium">{cpuPct === null ? t('Sampling…') : t('Live')}</span>
             </div>
           </CardContent>
         </Card>
