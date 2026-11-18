@@ -10,6 +10,12 @@ export type Lang = 'fa' | 'en'
  */
 const FA: Record<string, string> = {
   // ── Shell / navigation ───────────────────────────────────────────────
+  'CPU usage': 'مصرف پردازنده',
+  'Live processor usage of the panel container': 'مصرف لحظه‌ای پردازندهٔ کانتینر پنل',
+  'Updates every 3 seconds': 'به‌روزرسانی هر ۳ ثانیه',
+  Measurement: 'وضعیت اندازه‌گیری',
+  'Sampling…': 'در حال نمونه‌گیری…',
+  Live: 'لحظه‌ای',
   'Odyssey Panel': 'اودیسه',
   'User created — no server address given, so no proxy account was generated':
     'کاربر ساخته شد — چون آدرس سرور ندادی، کانفیگی ساخته نشد؛ بعداً از مدیریت کاربر اضافه کن',
